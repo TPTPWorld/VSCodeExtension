@@ -17,3 +17,4 @@
 - v0.1.1 Added importing problems and solutions.
 - v0.1.2 Edited description in package.json.
 - v0.1.3 Changed the lists of tools/systems for each of the proving and solving interfaces.
+- v0.1.4 Fixed issue where when invoked from the Command Palette, no URI is passed

@@ -595,6 +595,15 @@ function activate(context) {
     context.subscriptions.push(formatProblem);
     //@ RUN A THEOREM THROUGH SYSTEMONTPTP                                              
     const proveProblem = vscode.commands.registerCommand('tptp.proveProblem', async (uri) => {
+        // DOUBLE CHECK (USER OPENED FROM COMMAND PALLETE INSTEAD OF RIGHT CLICK)
+        if (!uri) {
+            const activeEditor = vscode.window.activeTextEditor;
+            if (!activeEditor) {
+                vscode.window.showErrorMessage('No active TPTP file open');
+                return;
+            }
+            uri = activeEditor.document.uri;
+        }
         const doc = await vscode.workspace.openTextDocument(uri);
         const content = doc.getText();
         const panel = vscode.window.createWebviewPanel('customMenu', 'TPTP Options', vscode.ViewColumn.Two, { enableScripts: true } // allow JS

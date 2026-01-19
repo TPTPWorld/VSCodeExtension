@@ -607,6 +607,17 @@ export function activate(context: ExtensionContext) {
 
   //@ RUN A THEOREM THROUGH SYSTEMONTPTP                                              
   const proveProblem = vscode.commands.registerCommand('tptp.proveProblem', async (uri: vscode.Uri) => {
+
+    // DOUBLE CHECK (USER OPENED FROM COMMAND PALLETE INSTEAD OF RIGHT CLICK)
+    if (!uri) {
+      const activeEditor = vscode.window.activeTextEditor;
+      if (!activeEditor) {
+        vscode.window.showErrorMessage('No active TPTP file open');
+        return;
+      }
+      uri = activeEditor.document.uri;
+    }
+
     const doc = await vscode.workspace.openTextDocument(uri);
     const content = doc.getText();
 
