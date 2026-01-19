@@ -1,6 +1,6 @@
 # TPTP Editor
 
-TPTP Editor is a Visual Studio Code extension that provides a streamlined development environment for working with the TPTP language — a standard format used extensively in automated theorem proving and formal logic research. 
+TPTP Editor is a VSCode extension that provides a streamlined development environment for working with the TPTP language, a standard format used extensively in automated theorem proving and formal logic research. 
 
 Built by Daniel Li in collaboration with Dr. Geoff Sutcliffe, the creator of the TPTP library, the extension features full syntax highlighting for both CNF, FOF, THF, etc. formats, enabling clear visual structuring of axioms, hypotheses, and conjectures. It recognizes '.p' & '.s' problem files, supports pretty-printing and safe character escaping, and integrates directly with the SystemOnTPTP + SystemOnTSTP service, allowing users to author, submit, and view solver results without leaving the editor. 
 
@@ -76,6 +76,12 @@ Designed for researchers, students, and logic developers. TPTP Editor enhances p
 
 No dependencies required — just install and start editing `.p` or `.s` files.
 
+## Design and Tradeoffs
+
+ - The extension needs an internet connection for integration with SystemOnTPTP but provides access to 50+ maintained provers and 500+ problems. Users do not need to install anything locally.
+ - Implemented TextMate grammar for syntax highlighting, but does not include go-to-definitions, but also file navigation in TPTP problems is not necessary since they are stand alone problems in single files.
+ - Chose webview panel for viewing instead of terminal to enhance user experience and it has an impact on side by side comparisons and also has downloadable results. 
+
 ## Extension Settings
 
 This extension does not contribute any custom settings.
@@ -138,6 +144,7 @@ The TPTP format is widely used in logic and automated reasoning. Learn more at [
 - Lexer/grammar derived from an existing [BNF TPTP grammar](https://tptp.org/UserDocs/TPTPLanguage/SyntaxBNF.html)
 - Actively tested against a large sample of problems from the official TPTP problem library
 - Webview-based prover runner panel implemented with custom form UI to prove theorems
+- All is open-source! :)
 
 ---
 
