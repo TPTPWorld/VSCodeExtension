@@ -291,7 +291,7 @@ class TPTPValidator {
     const validRoles = [
       'axiom','hypothesis','definition','assumption','lemma','theorem',
       'corollary','conjecture','negated_conjecture','plain','type',
-      'fi_domain','fi_functors','fi_predicates','unknown'
+      'fi_domain','fi_functors','fi_predicates','unknown', 'logic'
     ];
     if (!validRoles.includes(role)) {
       const roleStart = trimmedLine.indexOf(role);
