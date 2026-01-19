@@ -15,8 +15,39 @@ let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
 
+  async function fetchList(url: string, inputType: string = 'radio') {
+    const response = await fetch(url, {
+      "body": null,
+      "method": "GET",
+      "credentials": "include"
+    });
+    const data = await response.text();
+
+    const dom = new JSDOM(data);
+    const document = dom.window.document;
+
+    const results = Array.from(document.querySelectorAll("input[type='CHECKBOX'][name^='System_']")).map(node => {
+      const inp = node as HTMLInputElement;
+        
+      const displayValue = inp.value.replace('---', ' ');
+      
+      return `<label> <input type="${inputType}" name="prover" value="${inp.value}"> <span>${displayValue}</span> <br> </label>`;    
+    }).join("");
+
+    return results;
+  }
+
   //@ PREPARE PROBLEM THROUGH SYSTEMB4TPTP
   const prepareProblem = vscode.commands.registerCommand('tptp.prepareProblem', async (uri: vscode.Uri) => {
+    if (!uri) {
+      const activeEditor = vscode.window.activeTextEditor;
+      if (!activeEditor) {
+        vscode.window.showErrorMessage('No active TPTP file open');
+        return;
+      }
+      uri = activeEditor.document.uri;
+    }
+
     const doc = await vscode.workspace.openTextDocument(uri);
     const content = doc.getText();
 
@@ -26,6 +57,8 @@ export function activate(context: ExtensionContext) {
       vscode.ViewColumn.Two,
       { enableScripts: true }  // allow JS
     );
+
+    const results = await fetchList('https://tptp.org/cgi-bin/SystemB4TPTP');
 
     panel.webview.html = `
       <!DOCTYPE html>
@@ -133,38 +166,7 @@ export function activate(context: ExtensionContext) {
 
         <form id="optionForm">
           <h2>Select a Prover</h2>
-          <label> <input type="radio" name="prover" value="AddTypes---1.2.4"> <span>AddTypes 1.2.4</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ASk---0.2.3"> <span>ASk 0.2.3</span> <br> </label>
-          <label> <input type="radio" name="prover" value="BNFParser---0.0"> <span>BNFParser 0.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="BNFParserTree---0.0"> <span>BNFParserTree 0.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="BNFParserDrill---0.0"> <span>BNFParserDrill 0.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="CheckTyping---0.0"> <span>CheckTyping 0.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ECNF---3.2.5"> <span>ECNF 3.2.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="EGround---3.2.5"> <span>EGround 3.2.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ESelect---3.2.5"> <span>ESelect 3.2.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="GetSymbols---0.0"> <span>GetSymbols 0.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Isabelle---2TH0"> <span>Isabelle 2TH0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Horn2UEQ---0.4.1"> <span>Horn2UEQ 0.4.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Isabelle---2TF0"> <span>Isabelle 2TF0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Isabelle---2FOF"> <span>Isabelle 2FOF</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Leo-III-STC---1.7.19"> <span>Leo-III-STC 1.7.19</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Monotonox---0.4.1"> <span>Monotonox 0.4.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Monotonox-2FOF---0.4.1"> <span>Monotonox-2FOF 0.4.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Monotonox-2CNF---0.4.1"> <span>Monotonox-2CNF 0.4.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="NTFLET---1.8.5"> <span>NTFLET 1.8.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ProblemStats---1.0"> <span>ProblemStats 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Prophet---0.0"> <span>Prophet 0.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Saffron---4.5"> <span>Saffron 4.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SPCForProblem---1.0"> <span>SPCForProblem 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="TPII---0.0"> <span>TPII 0.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="TPTP2X---0.0"> <span>TPTP2X 0.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="TPTP4X---0.0"> <span>TPTP4X 0.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="TPTP2JSON---0.1"> <span>TPTP2JSON 0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="TwHelFTC---0.0"> <span>TwHelFTC 0.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="VCNF---4.8"> <span>VCNF 4.8</span> <br> </label>
-          <label> <input type="radio" name="prover" value="VSelect---4.4"> <span>VSelect 4.4</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Why3-FOF---0.85"> <span>Why3-FOF 0.85</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Why3-TF0---0.85"> <span>Why3-TF0 0.85</span> <br> </label>
+          ${results}
           <br>
 
           <h2>Continue to</h2>
@@ -440,8 +442,17 @@ export function activate(context: ExtensionContext) {
 
   context.subscriptions.push(prepareProblem);
 
-  //@ PREPARE A PROBLEM THROUGH SYSTEMB4TPTP
+  //@ FORMAT A PROBLEM THROUGH SYSTEMB4TPTP
   const formatProblem = vscode.commands.registerCommand('tptp.formatProblem', async (uri: vscode.Uri) => {
+    if (!uri) {
+      const activeEditor = vscode.window.activeTextEditor;
+      if (!activeEditor) {
+        vscode.window.showErrorMessage('No active TPTP file open');
+        return;
+      }
+      uri = activeEditor.document.uri;
+    }
+
     const editor = vscode.window.activeTextEditor;
 
     if (editor) {
@@ -628,6 +639,8 @@ export function activate(context: ExtensionContext) {
       { enableScripts: true }  // allow JS
     );
 
+    const results = await fetchList('https://tptp.org/cgi-bin/SystemOnTPTP');
+
     panel.webview.html = `
       <!DOCTYPE html>
       <html lang="en">
@@ -734,94 +747,7 @@ export function activate(context: ExtensionContext) {
 
         <form id="optionForm">
           <h2>Select a Prover</h2>
-          <label> <input type="radio" name="prover" value="agsyHOL---1.0"> <span>agsyHOL 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Alt-Ergo---0.95.2"> <span>Alt-Ergo 0.95.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Beagle---0.9.52"> <span>Beagle 0.9.52</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Bliksem---1.12"> <span>Bliksem 1.12</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ConnectPP---0.6.0"> <span>ConnectPP 0.6.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="CSE_E---1.6"> <span>CSE_E 1.6</span> <br> </label>
-          <label> <input type="radio" name="prover" value="CSI_E---1.1"> <span>CSI_E 1.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="cvc5---1.2.1"> <span>cvc5 1.2.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="cvc5-SAT---1.2.1"> <span>cvc5-SAT 1.2.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Darwin---1.4.5"> <span>Darwin 1.4.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="DarwinFM---1.4.5"> <span>DarwinFM 1.4.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="DLash---1.11"> <span>DLash 1.11</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Drodi---4.1.0"> <span>Drodi 4.1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="DT2H2X---1.8.4"> <span>DT2H2X 1.8.4</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Duper---1.0"> <span>Duper 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="E---3.2.5"> <span>E 3.2.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="E-SAT---3.2.5"> <span>E-SAT 3.2.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Enigma---0.5.1"> <span>Enigma 0.5.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Etableau---0.67"> <span>Etableau 0.67</span> <br> </label>
-          <label> <input type="radio" name="prover" value="E-Darwin---1.5"> <span>E-Darwin 1.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="EQP---0.9e"> <span>EQP 0.9e</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Equinox---6.0.1a"> <span>Equinox 6.0.1a</span> <br> </label>
-          <label> <input type="radio" name="prover" value="FEST---2.0.1"> <span>FEST 2.0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Geo-III---2018C"> <span>Geo-III 2018C</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Goeland---1.0.0"> <span>Goeland 1.0.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="GKC---0.8"> <span>GKC 0.8</span> <br> </label>
-          <label> <input type="radio" name="prover" value="GrAnDe---1.1"> <span>GrAnDe 1.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="HOLyHammer---0.21"> <span>HOLyHammer 0.21</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Imogen---2.0"> <span>Imogen 2.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Infinox---1.0"> <span>Infinox 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="iProver---3.9"> <span>iProver 3.9</span> <br> </label>
-          <label> <input type="radio" name="prover" value="iProver-SAT---3.9"> <span>iProver-SAT 3.9</span> <br> </label>
-          <label> <input type="radio" name="prover" value="iProverMo---2.5-0.1"> <span>iProverMo 2.5-0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="iProver-Eq---0.85"> <span>iProver-Eq 0.85</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Isabelle---2024"> <span>Isabelle 2024</span> <br> </label>
-          <label> <input type="radio" name="prover" value="JGXYZ---A3-0.2"> <span>JGXYZ A3-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="JGXYZ---FDECmi-0.2"> <span>JGXYZ FDECmi-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="JGXYZ---FDECon-0.2"> <span>JGXYZ FDECon-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="JGXYZ---FDELuk-0.2"> <span>JGXYZ FDELuk-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="JGXYZ---FOF-0.2"> <span>JGXYZ FOF-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="JGXYZ---L3-0.2"> <span>JGXYZ L3-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="JGXYZ---RM3-0.2"> <span>JGXYZ RM3-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="KSP---0.1.7"> <span>KSP 0.1.7</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Lash---1.13"> <span>Lash 1.13</span> <br> </label>
-          <label> <input type="radio" name="prover" value="lazyCoP---0.1"> <span>lazyCoP 0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="leanCoP---2.2"> <span>leanCoP 2.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="LEO-II---1.7.0"> <span>LEO-II 1.7.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Leo-III---1.7.19"> <span>Leo-III 1.7.19</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Leo-III-SAT---1.7.19"> <span>Leo-III-SAT 1.7.19</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Mace4---1109a"> <span>Mace4 1109a</span> <br> </label>
-          <label> <input type="radio" name="prover" value="MaedMax---1.4"> <span>MaedMax 1.4</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Matita---1.0"> <span>Matita 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Metis---2.4"> <span>Metis 2.4</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Moca---0.1"> <span>Moca 0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Muscadet---4.5"> <span>Muscadet 4.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="nanoCoP---2.0"> <span>nanoCoP 2.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Nitpick---2024"> <span>Nitpick 2024</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Otter---3.3"> <span>Otter 3.3</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Paradox---4.0"> <span>Paradox 4.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Princess---230619"> <span>Princess 230619</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Prover9---1109a"> <span>Prover9 1109a</span> <br> </label>
-          <label> <input type="radio" name="prover" value="PyRes---1.5"> <span>PyRes 1.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="RPx---1.0"> <span>RPx 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Satallax---3.5"> <span>Satallax 3.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SATCoP---0.1"> <span>SATCoP 0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Scavenger---EP-0.2"> <span>Scavenger EP-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SnakeForV---1.0"> <span>SnakeForV 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SnakeForV-SAT---1.0"> <span>SnakeForV-SAT 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SNARK---20120808r022"> <span>SNARK 20120808r022</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SPASS---3.9"> <span>SPASS 3.9</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SPASS+T---2.2.22"> <span>SPASS+T 2.2.22</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SRASS---0.1"> <span>SRASS 0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ToFoF---0.1"> <span>ToFoF 0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ToFoF-SAT---0.1"> <span>ToFoF-SAT 0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Toma---0.4"> <span>Toma 0.4</span> <br> </label>
-          <label> <input type="radio" name="prover" value="TPS---3.120601S1b"> <span>TPS 3.120601S1b</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Twee---2.5.0"> <span>Twee 2.5.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Vampire---4.9"> <span>Vampire 4.9</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Vampire-SAT---4.9"> <span>Vampire-SAT 4.9</span> <br> </label>
-          <label> <input type="radio" name="prover" value="VampireLite---4.9"> <span>VampireLite 4.9</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Vampire-FMo---4.9"> <span>Vampire-FMo 4.9</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Waldmeister---710"> <span>Waldmeister 710</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Z3---4.15.1"> <span>Z3 4.15.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Zenon---0.7.1"> <span>Zenon 0.7.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ZenonModulo---0.5.0"> <span>ZenonModulo 0.5.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ZenonModuloLP---0.5.0"> <span>ZenonModuloLP 0.5.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ZenonModuloDK---0.5.0"> <span>ZenonModuloDK 0.5.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Zipperpin---2.1"> <span>Zipperpin 2.1</span> <br> </label>
+          ${results}
           <br>
 
           <h2>Continue to</h2>
@@ -1365,6 +1291,16 @@ export function activate(context: ExtensionContext) {
 
   //@ RUN A THEOREM (USING MULTIPLE PROVERS)                                              
   const proveProblemMultiple = vscode.commands.registerCommand('tptp.proveProblemMultiple', async (uri: vscode.Uri) => {
+    // DOUBLE CHECK (USER OPENED FROM COMMAND PALLETE INSTEAD OF RIGHT CLICK)
+    if (!uri) {
+      const activeEditor = vscode.window.activeTextEditor;
+      if (!activeEditor) {
+        vscode.window.showErrorMessage('No active TPTP file open');
+        return;
+      }
+      uri = activeEditor.document.uri;
+    }
+
     const doc = await vscode.workspace.openTextDocument(uri);
     const content = doc.getText();
 
@@ -1374,6 +1310,8 @@ export function activate(context: ExtensionContext) {
       vscode.ViewColumn.Two,
       { enableScripts: true }  // allow JS
     );
+
+    const results = await fetchList("https://tptp.org/cgi-bin/SystemOnTPTP", "checkbox")
 
     panel.webview.html = `
       <!DOCTYPE html>
@@ -1481,94 +1419,7 @@ export function activate(context: ExtensionContext) {
 
         <form id="optionForm">
           <h2>Select the Provers</h2>
-          <label> <input type="radio" name="prover" value="agsyHOL---1.0"> <span>agsyHOL 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Alt-Ergo---0.95.2"> <span>Alt-Ergo 0.95.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Beagle---0.9.52"> <span>Beagle 0.9.52</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Bliksem---1.12"> <span>Bliksem 1.12</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ConnectPP---0.6.0"> <span>ConnectPP 0.6.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="CSE_E---1.6"> <span>CSE_E 1.6</span> <br> </label>
-          <label> <input type="radio" name="prover" value="CSI_E---1.1"> <span>CSI_E 1.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="cvc5---1.2.1"> <span>cvc5 1.2.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="cvc5-SAT---1.2.1"> <span>cvc5-SAT 1.2.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Darwin---1.4.5"> <span>Darwin 1.4.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="DarwinFM---1.4.5"> <span>DarwinFM 1.4.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="DLash---1.11"> <span>DLash 1.11</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Drodi---4.1.0"> <span>Drodi 4.1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="DT2H2X---1.8.4"> <span>DT2H2X 1.8.4</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Duper---1.0"> <span>Duper 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="E---3.2.5"> <span>E 3.2.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="E-SAT---3.2.5"> <span>E-SAT 3.2.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Enigma---0.5.1"> <span>Enigma 0.5.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Etableau---0.67"> <span>Etableau 0.67</span> <br> </label>
-          <label> <input type="radio" name="prover" value="E-Darwin---1.5"> <span>E-Darwin 1.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="EQP---0.9e"> <span>EQP 0.9e</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Equinox---6.0.1a"> <span>Equinox 6.0.1a</span> <br> </label>
-          <label> <input type="radio" name="prover" value="FEST---2.0.1"> <span>FEST 2.0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Geo-III---2018C"> <span>Geo-III 2018C</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Goeland---1.0.0"> <span>Goeland 1.0.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="GKC---0.8"> <span>GKC 0.8</span> <br> </label>
-          <label> <input type="radio" name="prover" value="GrAnDe---1.1"> <span>GrAnDe 1.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="HOLyHammer---0.21"> <span>HOLyHammer 0.21</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Imogen---2.0"> <span>Imogen 2.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Infinox---1.0"> <span>Infinox 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="iProver---3.9"> <span>iProver 3.9</span> <br> </label>
-          <label> <input type="radio" name="prover" value="iProver-SAT---3.9"> <span>iProver-SAT 3.9</span> <br> </label>
-          <label> <input type="radio" name="prover" value="iProverMo---2.5-0.1"> <span>iProverMo 2.5-0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="iProver-Eq---0.85"> <span>iProver-Eq 0.85</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Isabelle---2024"> <span>Isabelle 2024</span> <br> </label>
-          <label> <input type="radio" name="prover" value="JGXYZ---A3-0.2"> <span>JGXYZ A3-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="JGXYZ---FDECmi-0.2"> <span>JGXYZ FDECmi-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="JGXYZ---FDECon-0.2"> <span>JGXYZ FDECon-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="JGXYZ---FDELuk-0.2"> <span>JGXYZ FDELuk-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="JGXYZ---FOF-0.2"> <span>JGXYZ FOF-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="JGXYZ---L3-0.2"> <span>JGXYZ L3-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="JGXYZ---RM3-0.2"> <span>JGXYZ RM3-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="KSP---0.1.7"> <span>KSP 0.1.7</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Lash---1.13"> <span>Lash 1.13</span> <br> </label>
-          <label> <input type="radio" name="prover" value="lazyCoP---0.1"> <span>lazyCoP 0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="leanCoP---2.2"> <span>leanCoP 2.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="LEO-II---1.7.0"> <span>LEO-II 1.7.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Leo-III---1.7.19"> <span>Leo-III 1.7.19</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Leo-III-SAT---1.7.19"> <span>Leo-III-SAT 1.7.19</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Mace4---1109a"> <span>Mace4 1109a</span> <br> </label>
-          <label> <input type="radio" name="prover" value="MaedMax---1.4"> <span>MaedMax 1.4</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Matita---1.0"> <span>Matita 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Metis---2.4"> <span>Metis 2.4</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Moca---0.1"> <span>Moca 0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Muscadet---4.5"> <span>Muscadet 4.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="nanoCoP---2.0"> <span>nanoCoP 2.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Nitpick---2024"> <span>Nitpick 2024</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Otter---3.3"> <span>Otter 3.3</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Paradox---4.0"> <span>Paradox 4.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Princess---230619"> <span>Princess 230619</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Prover9---1109a"> <span>Prover9 1109a</span> <br> </label>
-          <label> <input type="radio" name="prover" value="PyRes---1.5"> <span>PyRes 1.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="RPx---1.0"> <span>RPx 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Satallax---3.5"> <span>Satallax 3.5</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SATCoP---0.1"> <span>SATCoP 0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Scavenger---EP-0.2"> <span>Scavenger EP-0.2</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SnakeForV---1.0"> <span>SnakeForV 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SnakeForV-SAT---1.0"> <span>SnakeForV-SAT 1.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SNARK---20120808r022"> <span>SNARK 20120808r022</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SPASS---3.9"> <span>SPASS 3.9</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SPASS+T---2.2.22"> <span>SPASS+T 2.2.22</span> <br> </label>
-          <label> <input type="radio" name="prover" value="SRASS---0.1"> <span>SRASS 0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ToFoF---0.1"> <span>ToFoF 0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ToFoF-SAT---0.1"> <span>ToFoF-SAT 0.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Toma---0.4"> <span>Toma 0.4</span> <br> </label>
-          <label> <input type="radio" name="prover" value="TPS---3.120601S1b"> <span>TPS 3.120601S1b</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Twee---2.5.0"> <span>Twee 2.5.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Vampire---4.9"> <span>Vampire 4.9</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Vampire-SAT---4.9"> <span>Vampire-SAT 4.9</span> <br> </label>
-          <label> <input type="radio" name="prover" value="VampireLite---4.9"> <span>VampireLite 4.9</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Vampire-FMo---4.9"> <span>Vampire-FMo 4.9</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Waldmeister---710"> <span>Waldmeister 710</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Z3---4.15.1"> <span>Z3 4.15.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Zenon---0.7.1"> <span>Zenon 0.7.1</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ZenonModulo---0.5.0"> <span>ZenonModulo 0.5.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ZenonModuloLP---0.5.0"> <span>ZenonModuloLP 0.5.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="ZenonModuloDK---0.5.0"> <span>ZenonModuloDK 0.5.0</span> <br> </label>
-          <label> <input type="radio" name="prover" value="Zipperpin---2.1"> <span>Zipperpin 2.1</span> <br> </label>
+          ${results}
           <br>
 
           <h2>Continue to</h2>
@@ -2056,6 +1907,16 @@ export function activate(context: ExtensionContext) {
 
   //@ PROCESS SOLUTION                                                                 
   const processSolution = vscode.commands.registerCommand('tptp.processSolution', async (uri: vscode.Uri) => {
+    // DOUBLE CHECK (USER OPENED FROM COMMAND PALLETE INSTEAD OF RIGHT CLICK)
+    if (!uri) {
+      const activeEditor = vscode.window.activeTextEditor;
+      if (!activeEditor) {
+        vscode.window.showErrorMessage('No active TPTP file open');
+        return;
+      }
+      uri = activeEditor.document.uri;
+    }
+
     const doc = await vscode.workspace.openTextDocument(uri);
     const content = doc.getText();
 
@@ -2065,6 +1926,8 @@ export function activate(context: ExtensionContext) {
       vscode.ViewColumn.Two,
       { enableScripts: true }  // allow JS
     );
+
+    const results = await fetchList("https://tptp.org/cgi-bin/SystemOnTSTP")
 
     panel.webview.html = `
     <!DOCTYPE html>
@@ -2172,27 +2035,7 @@ export function activate(context: ExtensionContext) {
       <p class="filename-txt">File: ${path.basename(doc.uri.fsPath)}</p>
 
       <form id="optionsForm">
-        <label> <input type="radio" name="prover" value="BNFParser---0.0"> <span>BNFParser 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="BNFParserTree---0.0"> <span>BNFParserTree 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="BNFParserDrill---0.0"> <span>BNFParserDrill 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="TPTP4X---0.0"> <span>TPTP4X 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="TPTP2JSON---0.1"> <span>TPTP2JSON 0.1</span> <br> </label>
-        <label> <input type="radio" name="prover" value="AGInTRater---0.0"> <span>AGInTRater 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="AGMV---1.0"> <span>AGMV 1.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="GAPT---2.16.0"> <span>GAPT 2.16.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="GDV---1.0"> <span>GDV 1.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="GDV-LP---1.0"> <span>GDV-LP 1.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="IDV---1.0"> <span>IDV 1.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="IIV---0.0"> <span>IIV 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="ITV---0.0"> <span>ITV 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="OAESys---0.0"> <span>OAESys 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="OAFSys---0.0"> <span>OAFSys 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="ProofStats---1.0"> <span>ProofStats 1.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="PProofSummary---0.0"> <span>PProofSummary 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="ProofSummary---0.0"> <span>ProofSummary 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="SolutionStats---1.0"> <span>SolutionStats 1.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="InterpretByATP---0.0"> <span>InterpretByATP 0.0</span> <br> </label>
-        
+        ${results}        
         <button class="submit-btn" type="submit">Prove</button>
       </form>
       <br><br><br><br>
@@ -2397,6 +2240,15 @@ export function activate(context: ExtensionContext) {
 
   //@ PROCESS SOLUTION (USING MULTIPLE PROCESSORS)                                     
   const processSolutionMultiple = vscode.commands.registerCommand('tptp.processSolutionMultiple', async (uri: vscode.Uri) => {
+    // DOUBLE CHECK (USER OPENED FROM COMMAND PALLETE INSTEAD OF RIGHT CLICK)
+    if (!uri) {
+      const activeEditor = vscode.window.activeTextEditor;
+      if (!activeEditor) {
+        vscode.window.showErrorMessage('No active TPTP file open');
+        return;
+      }
+      uri = activeEditor.document.uri;
+    }
     const doc = await vscode.workspace.openTextDocument(uri);
     const content = doc.getText();
 
@@ -2406,6 +2258,8 @@ export function activate(context: ExtensionContext) {
       vscode.ViewColumn.Two,
       { enableScripts: true }  // allow JS
     );
+
+    const results = await fetchList("https://tptp.org/cgi-bin/SystemOnTSTP")
 
     panel.webview.html = `
     <!DOCTYPE html>
@@ -2513,27 +2367,7 @@ export function activate(context: ExtensionContext) {
       <p class="filename-txt">File: ${path.basename(doc.uri.fsPath)}</p>
 
       <form id="optionsForm">
-        <label> <input type="radio" name="prover" value="BNFParser---0.0"> <span>BNFParser 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="BNFParserTree---0.0"> <span>BNFParserTree 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="BNFParserDrill---0.0"> <span>BNFParserDrill 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="TPTP4X---0.0"> <span>TPTP4X 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="TPTP2JSON---0.1"> <span>TPTP2JSON 0.1</span> <br> </label>
-        <label> <input type="radio" name="prover" value="AGInTRater---0.0"> <span>AGInTRater 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="AGMV---1.0"> <span>AGMV 1.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="GAPT---2.16.0"> <span>GAPT 2.16.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="GDV---1.0"> <span>GDV 1.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="GDV-LP---1.0"> <span>GDV-LP 1.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="IDV---1.0"> <span>IDV 1.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="IIV---0.0"> <span>IIV 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="ITV---0.0"> <span>ITV 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="OAESys---0.0"> <span>OAESys 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="OAFSys---0.0"> <span>OAFSys 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="ProofStats---1.0"> <span>ProofStats 1.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="PProofSummary---0.0"> <span>PProofSummary 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="ProofSummary---0.0"> <span>ProofSummary 0.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="SolutionStats---1.0"> <span>SolutionStats 1.0</span> <br> </label>
-        <label> <input type="radio" name="prover" value="InterpretByATP---0.0"> <span>InterpretByATP 0.0</span> <br> </label>
-        
+        ${results}        
         <button class="submit-btn" type="submit">Prove</button>
       </form>
       <br><br><br><br>
