@@ -146,7 +146,11 @@ Fixed issue where when invoked from the Command Palette, no URI is passed
 
 ### 0.1.5
 
-Added dynamic loading of ATP systems from tptp.org by using fetch 
+Added dynamic loading of ATP systems from tptp.org by using fetch
+
+### 0.1.6 
+
+Automated linting, and standardized releases with GitHub actions
 
 ---
 

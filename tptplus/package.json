@@ -3,7 +3,7 @@
   "displayName": "TPTP Editor",
   "publisher": "DE",
   "description": "Syntax highlighting, error detection, pretty-printing, and proving & processing theorems functions for TPTP language",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "icon": "images/TPTPWorld.png",
   "repository": {
     "type": "git",
@@ -23,8 +23,14 @@
     "languages": [
       {
         "id": "tptp",
-        "aliases": ["tptp", "TPTP"],
-        "extensions": [".p", ".s"],
+        "aliases": [
+          "tptp",
+          "TPTP"
+        ],
+        "extensions": [
+          ".p",
+          ".s"
+        ],
         "configuration": "./language-configuration.json",
         "icon": {
           "light": "./images/TPTPWorld.svg",
@@ -32,11 +38,13 @@
         }
       }
     ],
-    "grammars": [{
-      "language": "tptp",
-      "scopeName": "source.tptp",
-      "path": "./syntaxes/tptp.tmLanguage.json"
-    }],
+    "grammars": [
+      {
+        "language": "tptp",
+        "scopeName": "source.tptp",
+        "path": "./syntaxes/tptp.tmLanguage.json"
+      }
+    ],
     "commands": [
       {
         "command": "tptp.formatDocument",
@@ -159,5 +167,8 @@
     "@types/node": "^16.18.34",
     "@types/vscode": "^1.100.0",
     "typescript": "^5.1.3"
+  },
+  "lint-staged": {
+    "src/**/*.ts": "eslint --fix"
   }
 }

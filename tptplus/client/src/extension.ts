@@ -1273,11 +1273,16 @@ export function activate(context: ExtensionContext) {
 
           })
           .catch(error => {
-              console.error('Fetch error:', error);
+              vscode.window.showErrorMessage('Fetch error:', error);
           });
 
-        } catch (error: any) {
-          vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+          } else {
+            // Handle cases where something else was thrown (like a string or null)
+            vscode.window.showErrorMessage(`Error submitting to TPTP: ${String(error)}`);
+          }
         }
       }
     });
@@ -1890,11 +1895,16 @@ export function activate(context: ExtensionContext) {
             `;
           })
           .catch(error => {
-              console.error('Fetch error:', error);
+              vscode.window.showErrorMessage('Fetch error:', error);
           });
 
-        } catch (error: any) {
-          vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+          } else {
+            // Handle cases where something else was thrown (like a string or null)
+            vscode.window.showErrorMessage(`Error submitting to TPTP: ${String(error)}`);
+          }
         }
       }
     });
@@ -2223,11 +2233,16 @@ export function activate(context: ExtensionContext) {
             `;
           })
           .catch(error => {
-              console.error('Fetch error:', error);
+              vscode.window.showErrorMessage('Fetch error:', error);
           });
 
-        } catch (error: any) {
-          vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+          } else {
+            // Handle cases where something else was thrown (like a string or null)
+            vscode.window.showErrorMessage(`Error submitting to TPTP: ${String(error)}`);
+          }
         }
       }
     })
@@ -2559,11 +2574,16 @@ export function activate(context: ExtensionContext) {
             `;
           })
           .catch(error => {
-              console.error('Fetch error:', error);
+              vscode.window.showErrorMessage('Fetch error:', error);
           });
 
-        } catch (error: any) {
-          vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+          } else {
+            // Handle cases where something else was thrown (like a string or null)
+            vscode.window.showErrorMessage(`Error submitting to TPTP: ${String(error)}`);
+          }
         }
       }
     })
@@ -2634,7 +2654,7 @@ export function activate(context: ExtensionContext) {
     response = await fetch(`https://tptp.org/cgi-bin/SeeTPTP?Category=Solutions&Domain=${category}&File=${selectedSolution}`)
     html = await response.text();
 
-    console.log("HTML Content:", html);
+    // console.log("HTML Content:", html);
 
     const dom = new JSDOM(html);
     const document = dom.window.document;
@@ -2642,7 +2662,7 @@ export function activate(context: ExtensionContext) {
     let anchors = Array.from(document.querySelectorAll("tbody > tr > td > a"))
       .map(a => a.getAttribute("href")?.split("System=")[1])
       .filter((s): s is string => typeof s === "string");
-    console.log("Anchors:", anchors);
+    // console.log("Anchors:", anchors);
 
     const selectedSolutionProver = await vscode.window.showQuickPick(anchors, {placeHolder: "Select a Solution to import from specified prover"}) || '';
 

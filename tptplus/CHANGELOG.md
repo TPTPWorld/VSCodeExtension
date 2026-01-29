@@ -19,3 +19,4 @@
 - v0.1.3 Changed the lists of tools/systems for each of the proving and solving interfaces.
 - v0.1.4 Fixed issue where when invoked from the Command Palette, no URI is passed
 - v0.1.5 Added dynamic loading of ATP systems from tptp.org by using fetch 
+- v0.1.6 Automated linting, and standardized releases with GitHub actions

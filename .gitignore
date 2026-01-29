@@ -2,4 +2,6 @@ node_modules/
 .vscode/
 .DS_Store/
 PAT.txt
+vsc-extension-quickstart.md
 *.vsix
+.antlr
