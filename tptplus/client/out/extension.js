@@ -1224,11 +1224,17 @@ function activate(context) {
                         });
                     })
                         .catch(error => {
-                        console.error('Fetch error:', error);
+                        vscode.window.showErrorMessage('Fetch error:', error);
                     });
                 }
                 catch (error) {
-                    vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+                    if (error instanceof Error) {
+                        vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+                    }
+                    else {
+                        // Handle cases where something else was thrown (like a string or null)
+                        vscode.window.showErrorMessage(`Error submitting to TPTP: ${String(error)}`);
+                    }
                 }
             }
         });
@@ -1815,11 +1821,17 @@ function activate(context) {
             `;
                     })
                         .catch(error => {
-                        console.error('Fetch error:', error);
+                        vscode.window.showErrorMessage('Fetch error:', error);
                     });
                 }
                 catch (error) {
-                    vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+                    if (error instanceof Error) {
+                        vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+                    }
+                    else {
+                        // Handle cases where something else was thrown (like a string or null)
+                        vscode.window.showErrorMessage(`Error submitting to TPTP: ${String(error)}`);
+                    }
                 }
             }
         });
@@ -2126,11 +2138,17 @@ function activate(context) {
             `;
                     })
                         .catch(error => {
-                        console.error('Fetch error:', error);
+                        vscode.window.showErrorMessage('Fetch error:', error);
                     });
                 }
                 catch (error) {
-                    vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+                    if (error instanceof Error) {
+                        vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+                    }
+                    else {
+                        // Handle cases where something else was thrown (like a string or null)
+                        vscode.window.showErrorMessage(`Error submitting to TPTP: ${String(error)}`);
+                    }
                 }
             }
         });
@@ -2439,11 +2457,17 @@ function activate(context) {
             `;
                     })
                         .catch(error => {
-                        console.error('Fetch error:', error);
+                        vscode.window.showErrorMessage('Fetch error:', error);
                     });
                 }
                 catch (error) {
-                    vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+                    if (error instanceof Error) {
+                        vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
+                    }
+                    else {
+                        // Handle cases where something else was thrown (like a string or null)
+                        vscode.window.showErrorMessage(`Error submitting to TPTP: ${String(error)}`);
+                    }
                 }
             }
         });
@@ -2494,13 +2518,13 @@ function activate(context) {
         const selectedSolution = await vscode.window.showQuickPick(options, { placeHolder: "Select a Solution to import" });
         response = await fetch(`https://tptp.org/cgi-bin/SeeTPTP?Category=Solutions&Domain=${category}&File=${selectedSolution}`);
         html = await response.text();
-        console.log("HTML Content:", html);
+        // console.log("HTML Content:", html);
         const dom = new jsdom_1.JSDOM(html);
         const document = dom.window.document;
         let anchors = Array.from(document.querySelectorAll("tbody > tr > td > a"))
             .map(a => a.getAttribute("href")?.split("System=")[1])
             .filter((s) => typeof s === "string");
-        console.log("Anchors:", anchors);
+        // console.log("Anchors:", anchors);
         const selectedSolutionProver = await vscode.window.showQuickPick(anchors, { placeHolder: "Select a Solution to import from specified prover" }) || '';
         if (selectedSolution) {
             const SolutionUrl = `https://tptp.org/cgi-bin/SeeTPTP?Category=Solutions&Domain=${category}&File=${selectedSolution}&System=${selectedSolutionProver}`;

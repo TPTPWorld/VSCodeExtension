@@ -31,8 +31,7 @@
 % Comments : 
 %------------------------------------------------------------------------------
 cnf(same_hates,hypothesis,
-    ( hates(butler,X1)
-    | ~ hates(agatha,X1) ),
+    ( hates(butler,X1)| ~ hates(agatha,X1) ),
     file('/tmp/Bjkh7sT07D/SOT_UGQ2XW',same_hates) ).
 
 cnf(no_one_hates_everyone,hypothesis,
