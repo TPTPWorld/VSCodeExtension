@@ -1,7 +1,12 @@
 node_modules/
 .vscode/
 .DS_Store/
-PAT.txt
 vsc-extension-quickstart.md
 *.vsix
 .antlr
+tptplus/out/
+tptplus/client/out/
+tptplus/server/out/dist/
+.env
+RemoteSot.py
+*.g4
