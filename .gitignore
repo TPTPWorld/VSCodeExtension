@@ -2,8 +2,6 @@ node_modules/
 .vscode/
 .DS_Store/
 PAT.txt
-.github
 vsc-extension-quickstart.md
 *.vsix
 .antlr
-.husky
