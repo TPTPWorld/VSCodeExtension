@@ -10,3 +10,5 @@ tptplus/server/out/
 .env
 RemoteSot.py
 *.g4
+SyntaxBNF
+.DS_Store
