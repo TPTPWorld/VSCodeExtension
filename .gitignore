@@ -6,7 +6,7 @@ vsc-extension-quickstart.md
 .antlr
 tptplus/out/
 tptplus/client/out/
-tptplus/server/out/dist/
+tptplus/server/out/
 .env
 RemoteSot.py
 *.g4
