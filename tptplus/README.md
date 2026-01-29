@@ -1,14 +1,14 @@
 # TPTP Editor
 
-TPTP Editor is a VSCode extension that provides a streamlined development environment for working with the TPTP language, a standard format used extensively in automated theorem proving and formal logic research. 
+TPTP Editor is a VSCode extension that provides a streamlined development environment for working with the TPTP language, a standard format used extensively in automated theorem proving and formal logic research.
 
-Built by Daniel Li in collaboration with Dr. Geoff Sutcliffe, the creator of the TPTP library, the extension features full syntax highlighting for both CNF, FOF, THF, etc. formats, enabling clear visual structuring of axioms, hypotheses, and conjectures. It recognizes '.p' & '.s' problem files, supports pretty-printing and safe character escaping, and integrates directly with the SystemOnTPTP + SystemOnTSTP service, allowing users to author, submit, and view solver results without leaving the editor. 
+Built by Daniel Li in collaboration with Dr. Geoff Sutcliffe, the creator of the TPTP library, the extension features full syntax highlighting for both CNF, FOF, THF, etc. formats, enabling clear visual structuring of axioms, hypotheses, and conjectures. It recognizes '.p' & '.s' problem files, supports pretty-printing and safe character escaping, and integrates directly with the SystemOnTPTP + SystemOnTSTP service, allowing users to author, submit, and view solver results without leaving the editor.
 
 Designed for researchers, students, and logic developers. TPTP Editor enhances productivity and readability in formal logic workflows within the comfort of VS Code.
 
 ## Features
 
-### - TPTP Language Features 
+### - TPTP Language Features
 
 <img src="./tptplus/images/sample1.png" alt="sample image1" width="500"><br>
 
@@ -36,7 +36,7 @@ Designed for researchers, students, and logic developers. TPTP Editor enhances p
 
 ### Theorem Proving & Solution Processing
 
-- Seamless integration with the SystemOnTPTP & SystemOnTSTP services for remote automated proving 
+- Seamless integration with the SystemOnTPTP & SystemOnTSTP services for remote automated proving
 - Supports selection from dozens of available theorem provers (e.g. E, Vampire, CVC5, iProver, Z3, etc.)
 - Allows users to choose between TPTP format and native system output for flexibility in results
 - Displays the raw and formatted problem & solution returned from the prover inside a dedicated Webview
@@ -71,16 +71,15 @@ Designed for researchers, students, and logic developers. TPTP Editor enhances p
 - `TPTP: Process Solution Using Multiple Processors`
 - Automatically collect and process all available solution variants for a problem from SystemOnTPTP, allowing users to review results across different systems.
 
-
 ## Requirements
 
 No dependencies required — just install and start editing `.p` or `.s` files.
 
 ## Design and Tradeoffs
 
- - The extension needs an internet connection for integration with SystemOnTPTP but provides access to 50+ maintained provers and 500+ problems. Users do not need to install anything locally.
- - Implemented TextMate grammar for syntax highlighting, but does not include go-to-definitions, but also file navigation in TPTP problems is not necessary since they are stand alone problems in single files.
- - Chose webview panel for viewing instead of terminal to enhance user experience and it has an impact on side by side comparisons and also has downloadable results. 
+- The extension needs an internet connection for integration with SystemOnTPTP but provides access to 50+ maintained provers and 500+ problems. Users do not need to install anything locally.
+- Implemented TextMate grammar for syntax highlighting, but does not include go-to-definitions, but also file navigation in TPTP problems is not necessary since they are stand alone problems in single files.
+- Chose webview panel for viewing instead of terminal to enhance user experience and it has an impact on side by side comparisons and also has downloadable results.
 
 ## Extension Settings
 
@@ -110,13 +109,13 @@ Added pretty-printing. Fixed newline issue.
 
 ### 0.0.6
 
-Implemented problem prover inside editor context menu. 
+Implemented problem prover inside editor context menu.
 
 ### 0.0.7
 
 Added continute to option for TPTP Format and IDV Image.
 
-### 0.0.8 
+### 0.0.8
 
 Added solving for problems using multiple provers.
 
@@ -128,15 +127,15 @@ Added processing solutions using multiple provers. Added importing problems and 
 
 Refined readme and fixed image path.
 
-### 0.1.1 
+### 0.1.1
 
 Added importing problems and solutions.
 
-### 0.1.2 
+### 0.1.2
 
 Edited description in package.json.
 
-### 0.1.3 
+### 0.1.3
 
 Changed the lists of tools/systems for each of the proving and solving interfaces.
 
@@ -148,7 +147,7 @@ Fixed issue where when invoked from the Command Palette, no URI is passed
 
 Added dynamic loading of ATP systems from tptp.org by using fetch
 
-### 0.1.6 
+### 0.1.7
 
 Automated linting, and standardized releases with GitHub actions
 
