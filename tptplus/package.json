@@ -7,7 +7,7 @@
   "icon": "images/TPTPWorld.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/BananaApache/tptp_ide"
+    "url": "https://github.com/TPTPWorld/VSCodeExtension"
   },
   "activationEvents": [
     "onStartupFinished"
