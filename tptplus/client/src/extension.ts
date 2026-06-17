@@ -362,7 +362,7 @@ export function activate(context: ExtensionContext) {
             }
   
             editor.edit(editBuilder => {
-              editBuilder.replace(fullTextRange, output.replace("&gt;", ">"));
+              editBuilder.replace(fullTextRange, output.replace(/&gt;/g, ">"));
             });
         }
         }
@@ -606,7 +606,7 @@ export function activate(context: ExtensionContext) {
       }
 
       editor.edit(editBuilder => {
-        editBuilder.replace(fullTextRange, output.replace("&gt;", ">"));
+        editBuilder.replace(fullTextRange, output.replace(/&gt;/g, ">"));
       });
     } else {
       vscode.window.showInformationMessage("No active editor.");
