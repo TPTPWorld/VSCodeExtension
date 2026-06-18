@@ -12,3 +12,6 @@ RemoteSot.py
 *.g4
 SyntaxBNF
 .DS_Store
+
+# TypeScript incremental build cache
+*.tsbuildinfo
