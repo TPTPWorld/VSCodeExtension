@@ -151,6 +151,10 @@ Added dynamic loading of ATP systems from tptp.org by using fetch
 
 Automated linting, and standardized releases with GitHub actions
 
+### 0.1.8
+
+Fixed issue where some greater-than-signs are not handled correctly by command "Format TPTP File".
+
 ---
 
 ## For TPTP Language
