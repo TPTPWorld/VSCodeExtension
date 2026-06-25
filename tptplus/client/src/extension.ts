@@ -333,7 +333,7 @@ export function activate(context: ExtensionContext) {
     const sourceText = document.getText();
     const fullTextRange = new vscode.Range(
       document.positionAt(0),
-      document.positionAt(document.getText().length)
+      document.positionAt(sourceText.length)
     );
 
     // use WorkspaceEdit to edit any URI's document, even if it's invisible
@@ -348,8 +348,8 @@ export function activate(context: ExtensionContext) {
       return;
     }
 
+    // fall back to remote pretty-printer if the local pretty-printer fails
     const form = createSystemB4TptpForm(sourceText, null);
-
     const response = await fetch('https://tptp.org/cgi-bin/SystemOnTPTPFormReply', {
       method: 'POST',
       body: form
