@@ -4,6 +4,7 @@ out/**
 src/**
 client/src/**
 server/src/**
+native/**
 test/**
 tsconfig.json
 **/*.map

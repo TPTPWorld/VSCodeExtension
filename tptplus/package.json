@@ -157,6 +157,7 @@
     }
   },
   "scripts": {
+    "build:wasm": "emcmake cmake -S native/tptp-pretty -B native/tptp-pretty/build-wasm && cmake --build native/tptp-pretty/build-wasm",
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -b",
     "watch": "tsc -b -w",
