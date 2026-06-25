@@ -339,7 +339,9 @@ export function activate(context: ExtensionContext) {
     // use WorkspaceEdit to edit any URI's document, even if it's invisible
     const edit = new vscode.WorkspaceEdit();
 
-    const localOutput = await formatTptpLocally(context, sourceText);
+    const localOutput =
+      !sourceText.trim() ? "" :  // a whitespace-only file should become empty
+      await formatTptpLocally(context, sourceText);
     if (localOutput !== undefined) {
       edit.replace(uri, fullTextRange, localOutput);
       await vscode.workspace.applyEdit(edit);
