@@ -1,7 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import createTPTP4X from '../resources/wasm/tptp4X_wasm.js';
 
-type TPTP4XModule = {
+export type TPTP4XModule = {
   lengthBytesUTF8(value: string): number;
   stringToUTF8(value: string, pointer: number, maxBytesToWrite: number): void;
   UTF8ToString(pointer: number): string;
@@ -11,7 +12,7 @@ type TPTP4XModule = {
   _tptp4x_free_string(pointer: number): void;
 };
 
-type CreateTPTP4X = (options: {
+export type CreateTPTP4X = (options: {
   locateFile(file: string): string;
   print(): void;
   printErr(): void;
@@ -54,7 +55,6 @@ function statusFromError(error: unknown): number {
 
 async function main(): Promise<void> {
   const wasmDirectory = path.join(__dirname, '..', 'resources', 'wasm');
-  const createTPTP4X = require(path.join(wasmDirectory, 'tptp4X_wasm.js')) as CreateTPTP4X;
   const module = await createTPTP4X({
     locateFile: (file: string) => path.join(wasmDirectory, file),
     // print and printErr are silenced because stdout is reserved for the formatted TPTP output
