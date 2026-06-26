@@ -3,7 +3,7 @@
   "displayName": "TPTP",
   "publisher": "TPTPWorld",
   "description": "Syntax highlighting, error detection, pretty-printing, and proving & processing theorems functions for TPTP language",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "icon": "images/TPTPWorld.png",
   "repository": {
     "type": "git",
