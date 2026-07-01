@@ -11,6 +11,11 @@ import {
   TransportKind
 } from 'vscode-languageclient/node';
 
+import {
+  createSystemB4TptpForm
+} from './systemTptpForms';
+import { formatTptpLocally } from './localPrettyPrinter';
+
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
@@ -206,136 +211,7 @@ export function activate(context: ExtensionContext) {
         // vscode.window.showInformationMessage(`You selected: ${userData.continueOption}`);
         panel.dispose();
 
-        const form = new FormData();
-        form.append('TPTPProblem', '');
-        form.append('ProblemSource', 'FORMULAE');
-        form.append('FORMULAEProblem', content);
-        form.append('UPLOADProblem', '');
-        form.append('FormulaURL', '');
-        form.append('InputFormat', 'TPTP');
-        form.append('QuietFlag', '-q01');
-        form.append(`System___${userData.prover}`, userData.prover);
-        form.append('SubmitButton', 'ProcessProblem');
-        form.append('TimeLimit___AddTypes---1.2.4', '60');
-        form.append('Transform___AddTypes---1.2.4', 'none');
-        form.append('Format___AddTypes---1.2.4', 'tptp:raw');
-        form.append('Command___AddTypes---1.2.4', 'run_addtypes %s');
-        form.append('TimeLimit___ASk---0.2.3', '60');
-        form.append('Transform___ASk---0.2.3', 'none');
-        form.append('Format___ASk---0.2.3', 'tptp:raw');
-        form.append('Command___ASk---0.2.3', 'run_ASk %s');
-        form.append('TimeLimit___BNFParser---0.0', '60');
-        form.append('Transform___BNFParser---0.0', 'none');
-        form.append('Format___BNFParser---0.0', 'tptp:raw');
-        form.append('Command___BNFParser---0.0', 'BNFParser %s');
-        form.append('TimeLimit___BNFParserTree---0.0', '60');
-        form.append('Transform___BNFParserTree---0.0', 'none');
-        form.append('Format___BNFParserTree---0.0', 'tptp:raw');
-        form.append('Command___BNFParserTree---0.0', 'BNFParserTree %s');
-        form.append('TimeLimit___CheckTyping---0.0', '60');
-        form.append('Transform___CheckTyping---0.0', 'none');
-        form.append('Format___CheckTyping---0.0', 'tptp:raw');
-        form.append('Command___CheckTyping---0.0', 'CheckTyping -all %s');
-        form.append('TimeLimit___ECNF---3.2.5', '60');
-        form.append('Transform___ECNF---3.2.5', 'none');
-        form.append('Format___ECNF---3.2.5', 'tptp:raw');
-        form.append('Command___ECNF---3.2.5', 'run_ECNF %d %s');
-        form.append('TimeLimit___EGround---3.2.5', '60');
-        form.append('Transform___EGround---3.2.5', 'add_equality');
-        form.append('Format___EGround---3.2.5', 'tptp:raw');
-        form.append('Command___EGround---3.2.5', 'eground --tstp-in --tstp-out --silent --resources-info --split-tries=100 --memory-limit=200 --soft-cpu-limit=%d --add-one-instance --constraints %s');
-        form.append('TimeLimit___ESelect---3.2.5', '60');
-        form.append('Transform___ESelect---3.2.5', 'none');
-        form.append('Format___ESelect---3.2.5', 'tptp:raw');
-        form.append('Command___ESelect---3.2.5', 'eprover --sine=Auto --prune %s');
-        form.append('TimeLimit___GetSymbols---0.0', '60');
-        form.append('Transform___GetSymbols---0.0', 'none');
-        form.append('Format___GetSymbols---0.0', 'tptp:raw');
-        form.append('Command___GetSymbols---0.0', 'GetSymbols -all %s');
-        form.append('TimeLimit___Horn2UEQ---0.4.1', '60');
-        form.append('Transform___Horn2UEQ---0.4.1', 'none');
-        form.append('Format___Horn2UEQ---0.4.1', 'tptp:raw');
-        form.append('Command___Horn2UEQ---0.4.1', 'jukebox_horn2ueq %s');
-        form.append('TimeLimit___Isabelle---2FOF', '60');
-        form.append('Transform___Isabelle---2FOF', 'none');
-        form.append('Format___Isabelle---2FOF', 'tptp');
-        form.append('Command___Isabelle---2FOF', 'run_isabelle_2X FOF %s');
-        form.append('TimeLimit___Isabelle---2TF0', '60');
-        form.append('Transform___Isabelle---2TF0', 'none');
-        form.append('Format___Isabelle---2TF0', 'tptp');
-        form.append('Command___Isabelle---2TF0', 'run_isabelle_2X TF0 %s');
-        form.append('TimeLimit___Isabelle---2TH0', '60');
-        form.append('Transform___Isabelle---2TH0', 'none');
-        form.append('Format___Isabelle---2TH0', 'tptp');
-        form.append('Command___Isabelle---2TH0', 'run_isabelle_2X TH0 %s');
-        form.append('TimeLimit___Leo-III-STC---1.7.18', '60');
-        form.append('Transform___Leo-III-STC---1.7.18', 'none');
-        form.append('Format___Leo-III-STC---1.7.18', 'tptp:raw');
-        form.append('Command___Leo-III-STC---1.7.18', 'run_Leo-III %s %d STC');
-        form.append('TimeLimit___Monotonox---0.4.1', '60');
-        form.append('Transform___Monotonox---0.4.1', 'none');
-        form.append('Format___Monotonox---0.4.1', 'tptp:raw');
-        form.append('Command___Monotonox---0.4.1', 'jukebox monotonox %s');
-        form.append('TimeLimit___Monotonox-2CNF---0.4.1', '60');
-        form.append('Transform___Monotonox-2CNF---0.4.1', 'none');
-        form.append('Format___Monotonox-2CNF---0.4.1', 'tptp:raw');
-        form.append('Command___Monotonox-2CNF---0.4.1', 'jukebox_cnf %s');
-        form.append('TimeLimit___Monotonox-2FOF---0.4.1', '60');
-        form.append('Transform___Monotonox-2FOF---0.4.1', 'none');
-        form.append('Format___Monotonox-2FOF---0.4.1', 'tptp:raw');
-        form.append('Command___Monotonox-2FOF---0.4.1', 'jukebox_fof %s');
-        form.append('TimeLimit___NTFLET---1.8.5', '60');
-        form.append('Transform___NTFLET---1.8.5', 'none');
-        form.append('Format___NTFLET---1.8.5', 'tptp:raw');
-        form.append('Command___NTFLET---1.8.5', 'run_embed %s');
-        form.append('TimeLimit___ProblemStats---1.0', '60');
-        form.append('Transform___ProblemStats---1.0', 'none');
-        form.append('Format___ProblemStats---1.0', 'tptp:raw');
-        form.append('Command___ProblemStats---1.0', 'run_MakeListStats %s');
-        form.append('TimeLimit___Prophet---0.0', '60');
-        form.append('Transform___Prophet---0.0', 'none');
-        form.append('Format___Prophet---0.0', 'tptp');
-        form.append('Command___Prophet---0.0', 'prophet %s');
-        form.append('TimeLimit___Saffron---4.5', '60');
-        form.append('Transform___Saffron---4.5', 'none');
-        form.append('Format___Saffron---4.5', 'tptp:raw');
-        form.append('Command___Saffron---4.5', 'run_saffron %s %d');
-        form.append('TimeLimit___SPCForProblem---1.0', '60');
-        form.append('Transform___SPCForProblem---1.0', 'none');
-        form.append('Format___SPCForProblem---1.0', 'tptp:raw');
-        form.append('Command___SPCForProblem---1.0', 'run_SPCForProblem %s');
-        form.append('TimeLimit___TPII---0.0', '60');
-        form.append('Transform___TPII---0.0', 'none');
-        form.append('Format___TPII---0.0', 'tptp:raw');
-        form.append('Command___TPII---0.0', 'TPII %s');
-        form.append('TimeLimit___TPTP2JSON---0.1', '60');
-        form.append('Transform___TPTP2JSON---0.1', 'none');
-        form.append('Format___TPTP2JSON---0.1', 'tptp:raw');
-        form.append('Command___TPTP2JSON---0.1', 'run_tptp2json %s');
-        form.append('TimeLimit___TPTP2X---0.0', '60');
-        form.append('Transform___TPTP2X---0.0', 'none');
-        form.append('Format___TPTP2X---0.0', 'tptp:raw');
-        form.append('Command___TPTP2X---0.0', 'tptp2X -q2 -d- %s');
-        form.append('TimeLimit___TPTP4X---0.0', '60');
-        form.append('Transform___TPTP4X---0.0', 'none');
-        form.append('Format___TPTP4X---0.0', 'tptp:raw');
-        form.append('Command___TPTP4X---0.0', 'tptp4X %s');
-        form.append('TimeLimit___VCNF---4.8', '60');
-        form.append('Transform___VCNF---4.8', 'none');
-        form.append('Format___VCNF---4.8', 'tptp:raw');
-        form.append('Command___VCNF---4.8', 'run_vclausify_rel %s %d');
-        form.append('TimeLimit___VSelect---4.4', '60');
-        form.append('Transform___VSelect---4.4', 'none');
-        form.append('Format___VSelect---4.4', 'tptp:raw');
-        form.append('Command___VSelect---4.4', 'run_sine_select %s');
-        form.append('TimeLimit___Why3-FOF---0.85', '60');
-        form.append('Transform___Why3-FOF---0.85', 'none');
-        form.append('Format___Why3-FOF---0.85', 'tptp:raw');
-        form.append('Command___Why3-FOF---0.85', 'bin/why3 prove -F tptp -C /home/tptp/Systems/Why3---0.85/why3.conf -D /home/tptp/Systems/Why3---0.85/Source/drivers/tptp.gen %s');
-        form.append('TimeLimit___Why3-TF0---0.85', '60');
-        form.append('Transform___Why3-TF0---0.85', 'none');
-        form.append('Format___Why3-TF0---0.85', 'tptp:raw');
-        form.append('Command___Why3-TF0---0.85', 'bin/why3 prove -F tptp -C /home/tptp/Systems/Why3---0.85/why3.conf -D /home/tptp/Systems/Why3---0.85/Source/drivers/tptp-tff0.drv %s');
+        const form = createSystemB4TptpForm(content, userData.prover);
 
         if (userData.continueOption === 'replace_file') {
           const response = await fetch('https://tptp.org/cgi-bin/SystemOnTPTPFormReply', {
@@ -453,164 +329,42 @@ export function activate(context: ExtensionContext) {
       uri = activeEditor.document.uri;
     }
 
-    const editor = vscode.window.activeTextEditor;
+    const document = await vscode.workspace.openTextDocument(uri);
+    const sourceText = document.getText();
+    const fullTextRange = new vscode.Range(
+      document.positionAt(0),
+      document.positionAt(sourceText.length)
+    );
 
-    if (editor) {
-      const document = editor.document;
-      const fullTextRange = new vscode.Range(
-        document.positionAt(0),
-        document.positionAt(document.getText().length)
-      );
+    // use WorkspaceEdit to edit any URI's document, even if it's invisible
+    const edit = new vscode.WorkspaceEdit();
 
-      const form = new FormData();
-      form.append('TPTPProblem', '');
-      form.append('ProblemSource', 'FORMULAE');
-      form.append('FORMULAEProblem', document.getText(fullTextRange));
-      form.append('UPLOADProblem', '');
-      form.append('FormulaURL', '');
-      form.append('InputFormat', 'TPTP');
-      form.append('QuietFlag', '-q01');
-      form.append('SubmitButton', 'ProcessProblem');
-      form.append('TimeLimit___AddTypes---1.2.4', '60');
-      form.append('Transform___AddTypes---1.2.4', 'none');
-      form.append('Format___AddTypes---1.2.4', 'tptp:raw');
-      form.append('Command___AddTypes---1.2.4', 'run_addtypes %s');
-      form.append('TimeLimit___ASk---0.2.3', '60');
-      form.append('Transform___ASk---0.2.3', 'none');
-      form.append('Format___ASk---0.2.3', 'tptp:raw');
-      form.append('Command___ASk---0.2.3', 'run_ASk %s');
-      form.append('TimeLimit___BNFParser---0.0', '60');
-      form.append('Transform___BNFParser---0.0', 'none');
-      form.append('Format___BNFParser---0.0', 'tptp:raw');
-      form.append('Command___BNFParser---0.0', 'BNFParser %s');
-      form.append('TimeLimit___BNFParserTree---0.0', '60');
-      form.append('Transform___BNFParserTree---0.0', 'none');
-      form.append('Format___BNFParserTree---0.0', 'tptp:raw');
-      form.append('Command___BNFParserTree---0.0', 'BNFParserTree %s');
-      form.append('TimeLimit___CheckTyping---0.0', '60');
-      form.append('Transform___CheckTyping---0.0', 'none');
-      form.append('Format___CheckTyping---0.0', 'tptp:raw');
-      form.append('Command___CheckTyping---0.0', 'CheckTyping -all %s');
-      form.append('TimeLimit___ECNF---3.2.5', '60');
-      form.append('Transform___ECNF---3.2.5', 'none');
-      form.append('Format___ECNF---3.2.5', 'tptp:raw');
-      form.append('Command___ECNF---3.2.5', 'run_ECNF %d %s');
-      form.append('TimeLimit___EGround---3.2.5', '60');
-      form.append('Transform___EGround---3.2.5', 'add_equality');
-      form.append('Format___EGround---3.2.5', 'tptp:raw');
-      form.append('Command___EGround---3.2.5', 'eground --tstp-in --tstp-out --silent --resources-info --split-tries=100 --memory-limit=200 --soft-cpu-limit=%d --add-one-instance --constraints %s');
-      form.append('TimeLimit___ESelect---3.2.5', '60');
-      form.append('Transform___ESelect---3.2.5', 'none');
-      form.append('Format___ESelect---3.2.5', 'tptp:raw');
-      form.append('Command___ESelect---3.2.5', 'eprover --sine=Auto --prune %s');
-      form.append('TimeLimit___GetSymbols---0.0', '60');
-      form.append('Transform___GetSymbols---0.0', 'none');
-      form.append('Format___GetSymbols---0.0', 'tptp:raw');
-      form.append('Command___GetSymbols---0.0', 'GetSymbols -all %s');
-      form.append('TimeLimit___Horn2UEQ---0.4.1', '60');
-      form.append('Transform___Horn2UEQ---0.4.1', 'none');
-      form.append('Format___Horn2UEQ---0.4.1', 'tptp:raw');
-      form.append('Command___Horn2UEQ---0.4.1', 'jukebox_horn2ueq %s');
-      form.append('TimeLimit___Isabelle---2FOF', '60');
-      form.append('Transform___Isabelle---2FOF', 'none');
-      form.append('Format___Isabelle---2FOF', 'tptp');
-      form.append('Command___Isabelle---2FOF', 'run_isabelle_2X FOF %s');
-      form.append('TimeLimit___Isabelle---2TF0', '60');
-      form.append('Transform___Isabelle---2TF0', 'none');
-      form.append('Format___Isabelle---2TF0', 'tptp');
-      form.append('Command___Isabelle---2TF0', 'run_isabelle_2X TF0 %s');
-      form.append('TimeLimit___Isabelle---2TH0', '60');
-      form.append('Transform___Isabelle---2TH0', 'none');
-      form.append('Format___Isabelle---2TH0', 'tptp');
-      form.append('Command___Isabelle---2TH0', 'run_isabelle_2X TH0 %s');
-      form.append('TimeLimit___Leo-III-STC---1.7.18', '60');
-      form.append('Transform___Leo-III-STC---1.7.18', 'none');
-      form.append('Format___Leo-III-STC---1.7.18', 'tptp:raw');
-      form.append('Command___Leo-III-STC---1.7.18', 'run_Leo-III %s %d STC');
-      form.append('TimeLimit___Monotonox---0.4.1', '60');
-      form.append('Transform___Monotonox---0.4.1', 'none');
-      form.append('Format___Monotonox---0.4.1', 'tptp:raw');
-      form.append('Command___Monotonox---0.4.1', 'jukebox monotonox %s');
-      form.append('TimeLimit___Monotonox-2CNF---0.4.1', '60');
-      form.append('Transform___Monotonox-2CNF---0.4.1', 'none');
-      form.append('Format___Monotonox-2CNF---0.4.1', 'tptp:raw');
-      form.append('Command___Monotonox-2CNF---0.4.1', 'jukebox_cnf %s');
-      form.append('TimeLimit___Monotonox-2FOF---0.4.1', '60');
-      form.append('Transform___Monotonox-2FOF---0.4.1', 'none');
-      form.append('Format___Monotonox-2FOF---0.4.1', 'tptp:raw');
-      form.append('Command___Monotonox-2FOF---0.4.1', 'jukebox_fof %s');
-      form.append('TimeLimit___NTFLET---1.8.5', '60');
-      form.append('Transform___NTFLET---1.8.5', 'none');
-      form.append('Format___NTFLET---1.8.5', 'tptp:raw');
-      form.append('Command___NTFLET---1.8.5', 'run_embed %s');
-      form.append('TimeLimit___ProblemStats---1.0', '60');
-      form.append('Transform___ProblemStats---1.0', 'none');
-      form.append('Format___ProblemStats---1.0', 'tptp:raw');
-      form.append('Command___ProblemStats---1.0', 'run_MakeListStats %s');
-      form.append('TimeLimit___Prophet---0.0', '60');
-      form.append('Transform___Prophet---0.0', 'none');
-      form.append('Format___Prophet---0.0', 'tptp');
-      form.append('Command___Prophet---0.0', 'prophet %s');
-      form.append('TimeLimit___Saffron---4.5', '60');
-      form.append('Transform___Saffron---4.5', 'none');
-      form.append('Format___Saffron---4.5', 'tptp:raw');
-      form.append('Command___Saffron---4.5', 'run_saffron %s %d');
-      form.append('TimeLimit___SPCForProblem---1.0', '60');
-      form.append('Transform___SPCForProblem---1.0', 'none');
-      form.append('Format___SPCForProblem---1.0', 'tptp:raw');
-      form.append('Command___SPCForProblem---1.0', 'run_SPCForProblem %s');
-      form.append('TimeLimit___TPII---0.0', '60');
-      form.append('Transform___TPII---0.0', 'none');
-      form.append('Format___TPII---0.0', 'tptp:raw');
-      form.append('Command___TPII---0.0', 'TPII %s');
-      form.append('TimeLimit___TPTP2JSON---0.1', '60');
-      form.append('Transform___TPTP2JSON---0.1', 'none');
-      form.append('Format___TPTP2JSON---0.1', 'tptp:raw');
-      form.append('Command___TPTP2JSON---0.1', 'run_tptp2json %s');
-      form.append('TimeLimit___TPTP2X---0.0', '60');
-      form.append('Transform___TPTP2X---0.0', 'none');
-      form.append('Format___TPTP2X---0.0', 'tptp:raw');
-      form.append('Command___TPTP2X---0.0', 'tptp2X -q2 -d- %s');
-      form.append('TimeLimit___TPTP4X---0.0', '60');
-      form.append('Transform___TPTP4X---0.0', 'none');
-      form.append('Format___TPTP4X---0.0', 'tptp:raw');
-      form.append('Command___TPTP4X---0.0', 'tptp4X %s');
-      form.append('TimeLimit___VCNF---4.8', '60');
-      form.append('Transform___VCNF---4.8', 'none');
-      form.append('Format___VCNF---4.8', 'tptp:raw');
-      form.append('Command___VCNF---4.8', 'run_vclausify_rel %s %d');
-      form.append('TimeLimit___VSelect---4.4', '60');
-      form.append('Transform___VSelect---4.4', 'none');
-      form.append('Format___VSelect---4.4', 'tptp:raw');
-      form.append('Command___VSelect---4.4', 'run_sine_select %s');
-      form.append('TimeLimit___Why3-FOF---0.85', '60');
-      form.append('Transform___Why3-FOF---0.85', 'none');
-      form.append('Format___Why3-FOF---0.85', 'tptp:raw');
-      form.append('Command___Why3-FOF---0.85', 'bin/why3 prove -F tptp -C /home/tptp/Systems/Why3---0.85/why3.conf -D /home/tptp/Systems/Why3---0.85/Source/drivers/tptp.gen %s');
-      form.append('TimeLimit___Why3-TF0---0.85', '60');
-      form.append('Transform___Why3-TF0---0.85', 'none');
-      form.append('Format___Why3-TF0---0.85', 'tptp:raw');
-      form.append('Command___Why3-TF0---0.85', 'bin/why3 prove -F tptp -C /home/tptp/Systems/Why3---0.85/why3.conf -D /home/tptp/Systems/Why3---0.85/Source/drivers/tptp-tff0.drv %s');
-
-      const response = await fetch('https://tptp.org/cgi-bin/SystemOnTPTPFormReply', {
-        method: 'POST',
-        body: form
-      });
-      const text = await response.text();
-      const match = text.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
-
-      let output = document.getText(fullTextRange);
-
-      if (match) {  
-        output = match[1].split("\n").slice(2, match[1].split("\n").length - 4).join("\n")
-      }
-
-      editor.edit(editBuilder => {
-        editBuilder.replace(fullTextRange, output.replace(/&gt;/g, ">"));
-      });
-    } else {
-      vscode.window.showInformationMessage("No active editor.");
+    const localOutput =
+      !sourceText.trim() ? "" :  // a whitespace-only file should become empty
+      await formatTptpLocally(context, sourceText);
+    if (localOutput !== undefined) {
+      edit.replace(uri, fullTextRange, localOutput);
+      await vscode.workspace.applyEdit(edit);
+      return;
     }
+
+    // fall back to remote pretty-printer if the local pretty-printer fails
+    const form = createSystemB4TptpForm(sourceText, null);
+    const response = await fetch('https://tptp.org/cgi-bin/SystemOnTPTPFormReply', {
+      method: 'POST',
+      body: form
+    });
+    const text = await response.text();
+    const match = text.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+
+    let output = sourceText;
+
+    if (match) {  
+      output = match[1].split("\n").slice(2, match[1].split("\n").length - 4).join("\n")
+    }
+
+    edit.replace(uri, fullTextRange, output.replace(/&gt;/g, ">"));
+    await vscode.workspace.applyEdit(edit);
     
   })
 

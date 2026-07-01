@@ -141,19 +141,24 @@ Changed the lists of tools/systems for each of the proving and solving interface
 
 ### 0.1.4
 
-Fixed issue where when invoked from the Command Palette, no URI is passed
+Fixed issue where when invoked from the Command Palette, no URI is passed.
 
 ### 0.1.5
 
-Added dynamic loading of ATP systems from tptp.org by using fetch
+Added dynamic loading of ATP systems from tptp.org by using fetch.
 
 ### 0.1.7
 
-Automated linting, and standardized releases with GitHub actions
+Automated linting, and standardized releases with GitHub actions.
 
 ### 0.1.8
 
 Fixed issue where some greater-than-signs are not handled correctly by command "Format TPTP File".
+
+### 0.1.9
+
+Added local pretty printer so that "Format TPTP File" works without Internet connection.
+The original remote pretty printer is kept as a fallback.
 
 ---
 
