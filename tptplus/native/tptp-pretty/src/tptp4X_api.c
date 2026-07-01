@@ -117,6 +117,7 @@ char * tptp4x_pretty_print_tptp(const char * Input) {
     State->Signature = NewSignature();
     LastNodeType = nontype;
 
+    // Reading formulae one-by-one
     while (!CheckTokenType(State->InputStream, endeof)) {
         State->AnnotatedFormula = ParseAndUseAnnotatedFormula(State->InputStream, State->Signature);
         if (State->AnnotatedFormula == NULL) {

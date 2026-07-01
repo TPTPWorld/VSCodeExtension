@@ -12,9 +12,9 @@ endif()
 
 include(FetchContent)
 
-set(JJPARSER_GIT_REPO "https://github.com/jzxia/JJParser.git" CACHE STRING
+set(JJPARSER_GIT_REPO "https://github.com/TPTPWorld/JJParser.git" CACHE STRING
   "JJParser repository used for the bundled local pretty-printer")
-set(JJPARSER_GIT_TAG "jzxia__DISABLE_CURL_compiler_flag" CACHE STRING
+set(JJPARSER_GIT_TAG "2e181a18239ec50fcf6b724c44efe52c3cc92827" CACHE STRING
   "JJParser branch or commit used for the bundled local pretty-printer")
 set(TPTP_PRETTY_RUNTIME_DIR
   "${CMAKE_CURRENT_SOURCE_DIR}/../../client/resources/wasm"
