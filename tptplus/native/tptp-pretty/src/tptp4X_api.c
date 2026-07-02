@@ -100,9 +100,9 @@ char * tptp4x_pretty_print_tptp(const char * Input) {
     OldSZSStatusReporting = GetSZSStatusReporting();
 
     SetNeedForNonLogicTokens(1);
-    SetAllowFreeVariables(0);
+    SetAllowFreeVariables(0);  // no getter for AllowFreeVariables (default value is 0)
     SetWarnings(0);
-    SetSZSStatusReporting(0);
+    SetSZSStatusReporting(1);
 
     State->OutputStream = open_memstream(&(State->OutputBuffer), &(State->OutputLength));
     if (State->OutputStream == NULL) {
@@ -139,7 +139,7 @@ char * tptp4x_pretty_print_tptp(const char * Input) {
 
 finish:
     SetNeedForNonLogicTokens(OldNeedNonLogicTokens);
-    SetAllowFreeVariables(0);
+    SetAllowFreeVariables(0);  // no getter for AllowFreeVariables (default value is 0)
     SetWarnings(OldWarnings);
     SetSZSStatusReporting(OldSZSStatusReporting);
     CleanupPrettyState((TPTP4XPrettyState *)State);
