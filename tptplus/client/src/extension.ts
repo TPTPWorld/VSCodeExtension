@@ -18,6 +18,63 @@ import { formatTptpLocally } from './localPrettyPrinter';
 
 let client: LanguageClient;
 
+/**
+ * Takes a JJParser error message and turns it into a VS Code cursor position.
+ * @param message The expected message shape is like
+ *                "SyntaxError: Line 15 Char 6 Token "{" continuing with ..."
+ * @returns VS Code cursor position or undefined
+ */
+function parserErrorPosition(document: vscode.TextDocument, message: string): vscode.Position | undefined {
+  const match = message.match(/\bLine\s+(\d+)\s+Char\s+(\d+)(?:\s+Token\s+"([^"]*)")?/);
+  if (!match) {
+    return undefined;
+  }
+
+  const reportedLine = Number.parseInt(match[1], 10);
+  const reportedCharacter = Number.parseInt(match[2], 10);
+  if (Number.isNaN(reportedLine) || Number.isNaN(reportedCharacter)) {
+    return undefined;
+  }
+
+  const lineIndex = Math.max(0, Math.min(reportedLine - 1, document.lineCount - 1));
+  const lineText = document.lineAt(lineIndex).text;
+  let characterIndex = Math.max(0, Math.min(reportedCharacter - 1, lineText.length));
+  const token = match[3];
+
+  // If the error message reports a token, try to move cursor to the beginning of that token.
+  if (token) {
+    const tokenIndex = lineText.slice(0, characterIndex + 1).lastIndexOf(token);
+    if (tokenIndex >= 0) {
+      characterIndex = tokenIndex;
+    }
+  }
+
+  return new vscode.Position(lineIndex, characterIndex);
+}
+
+/**
+ * Takes a JJParser error message and, if it points to a specific position in source file,
+ * highlight the position.
+ * @param message The expected message shape is like
+ *                "SyntaxError: Line 15 Char 6 Token "{" continuing with ..."
+ * @returns Whether the JJParser error message contains the description of a position
+ */
+async function revealParserErrorLocation(document: vscode.TextDocument, message: string): Promise<boolean> {
+  const position = parserErrorPosition(document, message);
+  if (!position) {
+    return false;
+  }
+
+  const range = new vscode.Range(position, position);
+  const editor = await vscode.window.showTextDocument(document, {
+    preview: false,
+    selection: range,
+  });
+  editor.selection = new vscode.Selection(position, position);
+  editor.revealRange(range, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+  return true;
+}
+
 export function activate(context: ExtensionContext) {
 
   async function fetchList(url: string, inputType: string = 'radio') {
@@ -339,16 +396,34 @@ export function activate(context: ExtensionContext) {
     // use WorkspaceEdit to edit any URI's document, even if it's invisible
     const edit = new vscode.WorkspaceEdit();
 
-    const localOutput =
-      !sourceText.trim() ? "" :  // a whitespace-only file should become empty
-      await formatTptpLocally(context, sourceText);
-    if (localOutput !== undefined) {
-      edit.replace(uri, fullTextRange, localOutput);
+    // a whitespace-only file should become empty
+    if (!sourceText.trim()) {
+      edit.replace(uri, fullTextRange, "");
       await vscode.workspace.applyEdit(edit);
       return;
     }
 
-    // fall back to remote pretty-printer if the local pretty-printer fails
+    // call the local pretty-printer
+    const localResult = await formatTptpLocally(context, sourceText);
+    if (localResult.kind === 'success') {
+      edit.replace(uri, fullTextRange, localResult.output);
+      await vscode.workspace.applyEdit(edit);
+      return;
+    }
+    if (localResult.kind === 'parser-error') {
+      const foundErrorLocation = await revealParserErrorLocation(document, localResult.message);
+      if (foundErrorLocation) {
+        vscode.window.showErrorMessage(`Failed to format TPTP file: ${localResult.message}`);
+        return;
+      } else {
+        vscode.window.showErrorMessage(`\
+          Failed to format TPTP file locally: ${localResult.message}
+          Trying the remote formatter on System B4 TPTP...`);
+      }
+    }
+
+    // Fall back to remote pretty-printer if the local pretty-printer fails on an unknown error
+    // or an error that does not point to any specific location in `sourceText`.
     const form = createSystemB4TptpForm(sourceText, null);
     const response = await fetch('https://tptp.org/cgi-bin/SystemOnTPTPFormReply', {
       method: 'POST',
