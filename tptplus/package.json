@@ -84,13 +84,6 @@
       }
     ],
     "menus": {
-      "editor/title": [
-        {
-          "command": "tptp.formatDocument",
-          "when": "editorLangId == tptp",
-          "group": "navigation"
-        }
-      ],
       "editor/context": [
         {
           "command": "tptp.prepareProblem",
