@@ -317,7 +317,7 @@ export function activate(context: ExtensionContext) {
             body: form
           });
           const text = await response.text();
-          const formattedOutput = extractSystemB4TptpOutput(text);
+          const match = text.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
   
           const editor = vscode.window.activeTextEditor;
   
@@ -331,18 +331,12 @@ export function activate(context: ExtensionContext) {
   
             let output = document.getText(fullTextRange);
   
-            if (formattedOutput !== undefined) {  
-              const lastLine = lastNonemptyLine(formattedOutput);
-              if (lastLine?.startsWith('ERROR: ')) {
-                await revealParserErrorLocation(document, lastLine);
-                return;
-              }
-
-              output = formattedOutput
+            if (match) {  
+              output = match[1].split("\n").slice(2, match[1].split("\n").length - 4).join("\n")
             }
   
             editor.edit(editBuilder => {
-              editBuilder.replace(fullTextRange, output);
+              editBuilder.replace(fullTextRange, output.replace(/&gt;/g, ">"));
             });
         }
         }
