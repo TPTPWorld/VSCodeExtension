@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 const RUNNER_PATH = path.join('client', 'out', 'localPrettyPrinterProcess.js');
-const LOCAL_PRETTY_PRINT_TIMEOUT_MS = 10000;
+const LOCAL_PRETTY_PRINT_TIMEOUT_MS = 10000;  // TODO: make this configurable
 
 export type LocalPrettyPrintResult =
   | { kind: 'success'; output: string }
@@ -33,6 +33,10 @@ export async function formatTptpLocally(
   context: vscode.ExtensionContext,
   input: string
 ): Promise<LocalPrettyPrintResult> {
+
+  // // debugging: uncomment this to simulate a failure of the local JJParser
+  // return { kind: 'parser-error', message: '(This is an error message for debugging that does not point to any specific location in source file.)' };
+
   return new Promise(resolve => {
     let stdout = '';
     let stderr = '';
