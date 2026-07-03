@@ -22,3 +22,4 @@
 - v0.1.7 Automated linting, and standardized releases with GitHub actions.
 - v0.1.8 Fixed issue where some greater-than-signs are not handled correctly by command "Format TPTP File".
 - v0.1.9 Added local pretty printer so that "Format TPTP File" works without Internet connection. The original remote pretty printer is kept as a fallback.
+- v0.1.10 Added error handling for "Format TPTP File": display error message and jump to position of syntax error.
