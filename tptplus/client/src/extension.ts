@@ -19,6 +19,47 @@ import { formatTptpLocally } from './localPrettyPrinter';
 let client: LanguageClient;
 
 /**
+ * Extract the text between `<PRE>` and `</PRE>` from the HTML response of System B4 TPTP.
+ */
+function extractSystemB4TptpOutput(html: string): string | undefined {
+  const dom = new JSDOM(html);
+  const preText = dom.window.document.querySelector('pre')?.textContent ?? undefined;
+  if (preText === undefined) {
+    return undefined;
+  }
+
+  const startMarker = '% START OF SYSTEM OUTPUT';
+  const endMarker = '% END OF SYSTEM OUTPUT';
+  const lines = preText.split('\n');
+  const startLine = lines.findIndex(line => line.trim() === startMarker);
+  let endLine = -1;  // TODO: use `findLastIndex`?
+  for (let i = lines.length - 1; i >= Math.max(0, startLine); i -= 1) {
+    if (lines[i].trim() === endMarker) {
+      endLine = i;
+      break;
+    }
+  }
+
+  if (startLine === -1 || endLine === -1 || startLine >= endLine) {
+    return undefined;
+  }
+
+  return lines.slice(startLine + 1, endLine).join('\n');
+}
+
+function lastNonemptyLine(text: string): string | undefined {
+  const lines = text.split('\n');
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const line = lines[i].trim();
+    if (line) {
+      return line;
+    }
+  }
+
+  return undefined;
+}
+
+/**
  * Takes a JJParser error message and turns it into a VS Code cursor position.
  * @param message The expected message shape is like
  *                "SyntaxError: Line 15 Char 6 Token "{" continuing with ..."
@@ -276,7 +317,7 @@ export function activate(context: ExtensionContext) {
             body: form
           });
           const text = await response.text();
-          const match = text.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+          const formattedOutput = extractSystemB4TptpOutput(text);
   
           const editor = vscode.window.activeTextEditor;
   
@@ -290,12 +331,18 @@ export function activate(context: ExtensionContext) {
   
             let output = document.getText(fullTextRange);
   
-            if (match) {  
-              output = match[1].split("\n").slice(2, match[1].split("\n").length - 4).join("\n")
+            if (formattedOutput !== undefined) {  
+              const lastLine = lastNonemptyLine(formattedOutput);
+              if (lastLine?.startsWith('ERROR: ')) {
+                await revealParserErrorLocation(document, lastLine);
+                return;
+              }
+
+              output = formattedOutput
             }
   
             editor.edit(editBuilder => {
-              editBuilder.replace(fullTextRange, output.replace(/&gt;/g, ">"));
+              editBuilder.replace(fullTextRange, output);
             });
         }
         }
@@ -375,7 +422,7 @@ export function activate(context: ExtensionContext) {
 
   context.subscriptions.push(prepareProblem);
 
-  //@ FORMAT A PROBLEM THROUGH SYSTEMB4TPTP
+  //@ FORMAT A PROBLEM BY RUNNING JJPARSER LOCALLY, USING REMOTE SYSTEMB4TPTP AS FALLBACK
   const formatProblem = vscode.commands.registerCommand('tptp.formatProblem', async (uri: vscode.Uri) => {
     if (!uri) {
       const activeEditor = vscode.window.activeTextEditor;
@@ -403,7 +450,7 @@ export function activate(context: ExtensionContext) {
       return;
     }
 
-    // call the local pretty-printer
+    // call the local pretty-printer (JJParser)
     const localResult = await formatTptpLocally(context, sourceText);
     if (localResult.kind === 'success') {
       edit.replace(uri, fullTextRange, localResult.output);
@@ -416,9 +463,9 @@ export function activate(context: ExtensionContext) {
         vscode.window.showErrorMessage(`Failed to format TPTP file: ${localResult.message}`);
         return;
       } else {
-        vscode.window.showErrorMessage(`\
+        vscode.window.showWarningMessage(`\
           Failed to format TPTP file locally: ${localResult.message}
-          Trying the remote formatter on System B4 TPTP...`);
+          Trying the remote formatter provided by SystemB4TPTP...`);
       }
     }
 
@@ -430,16 +477,21 @@ export function activate(context: ExtensionContext) {
       body: form
     });
     const text = await response.text();
-    const match = text.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+    const formattedOutput = extractSystemB4TptpOutput(text);
 
-    let output = sourceText;
-
-    if (match) {  
-      output = match[1].split("\n").slice(2, match[1].split("\n").length - 4).join("\n")
+    if (formattedOutput !== undefined) {
+      const lastLine = lastNonemptyLine(formattedOutput);
+      if (lastLine?.startsWith('ERROR: ')) {
+        await revealParserErrorLocation(document, lastLine);
+        vscode.window.showErrorMessage(`\
+          Failed to format TPTP file: \
+          remote formatter provided by SystemB4TPTP exited with ${lastLine}`);
+      } else {
+        edit.replace(uri, fullTextRange, formattedOutput);
+        await vscode.workspace.applyEdit(edit);
+        vscode.window.showInformationMessage("Format TPTP file successful.");
+      }
     }
-
-    edit.replace(uri, fullTextRange, output.replace(/&gt;/g, ">"));
-    await vscode.workspace.applyEdit(edit);
     
   })
 
