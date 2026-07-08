@@ -62,11 +62,12 @@ function lastNonemptyLine(text: string): string | undefined {
 /**
  * Takes a JJParser error message and turns it into a VS Code cursor position.
  * @param message The expected message shape is like
- *                "SyntaxError: Line 15 Char 6 Token "{" continuing with ..."
+ *                'SyntaxError: Line 15 Char 6 Token "{" continuing with ...' or
+ *                'SyntaxError: Line 11 Char 42 Character "[" continuing with ...'
  * @returns VS Code cursor position or undefined
  */
 function parserErrorPosition(document: vscode.TextDocument, message: string): vscode.Position | undefined {
-  const match = message.match(/\bLine\s+(\d+)\s+Char\s+(\d+)(?:\s+Token\s+"([^"]*)")?/);
+  const match = message.match(/\bLine\s+(\d+)\s+Char\s+(\d+)(?:\s+(?:Token|Character)\s+"([\s\S]*?)"\s+continuing\b)?/);
   if (!match) {
     return undefined;
   }
@@ -80,13 +81,13 @@ function parserErrorPosition(document: vscode.TextDocument, message: string): vs
   const lineIndex = Math.max(0, Math.min(reportedLine - 1, document.lineCount - 1));
   const lineText = document.lineAt(lineIndex).text;
   let characterIndex = Math.max(0, Math.min(reportedCharacter - 1, lineText.length));
-  const token = match[3];
+  const reportedText = match[3];
 
-  // If the error message reports a token, try to move cursor to the beginning of that token.
-  if (token) {
-    const tokenIndex = lineText.slice(0, characterIndex + 1).lastIndexOf(token);
-    if (tokenIndex >= 0) {
-      characterIndex = tokenIndex;
+  // If the error message reports a token or character, try to move cursor to its beginning.
+  if (reportedText) {
+    const reportedTextIndex = lineText.slice(0, characterIndex + 1).lastIndexOf(reportedText);
+    if (reportedTextIndex >= 0) {
+      characterIndex = reportedTextIndex;
     }
   }
 
