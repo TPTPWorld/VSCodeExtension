@@ -18,6 +18,13 @@ import { formatTptpLocally } from './localPrettyPrinter';
 
 let client: LanguageClient;
 
+interface JJParserErrorLocation {
+  position: vscode.Position;
+  range: vscode.Range;
+  message: string;
+  reportedText?: string;
+}
+
 /**
  * Extract the text between `<PRE>` and `</PRE>` from the HTML response of System B4 TPTP.
  */
@@ -60,13 +67,15 @@ function lastNonemptyLine(text: string): string | undefined {
 }
 
 /**
- * Takes a JJParser error message and turns it into a VS Code cursor position.
+ * Takes a JJParser error message and turns it into a VS Code location.
  * @param message The expected message shape is like
  *                'SyntaxError: Line 15 Char 6 Token "{" continuing with ...' or
  *                'SyntaxError: Line 11 Char 42 Character "[" continuing with ...'
- * @returns VS Code cursor position or undefined
+ * @returns VS Code location or undefined
  */
-function parserErrorPosition(document: vscode.TextDocument, message: string): vscode.Position | undefined {
+function getJJParserErrorLocation(document: vscode.TextDocument, message: string):
+  JJParserErrorLocation | undefined
+{
   const match = message.match(/\bLine\s+(\d+)\s+Char\s+(\d+)(?:\s+(?:Token|Character)\s+"([\s\S]*?)"\s+continuing\b)?/);
   if (!match) {
     return undefined;
@@ -91,20 +100,56 @@ function parserErrorPosition(document: vscode.TextDocument, message: string): vs
     }
   }
 
-  return new vscode.Position(lineIndex, characterIndex);
+  const startPosition = new vscode.Position(lineIndex, characterIndex);
+  const endCharacterIndex = reportedText
+    ? Math.min(lineText.length, characterIndex + reportedText.length)
+    : characterIndex;
+  const endPosition = new vscode.Position(lineIndex, endCharacterIndex);
+
+  return {
+    position: startPosition,
+    range: new vscode.Range(startPosition, endPosition),
+    message: message,
+    reportedText: reportedText
+  };
 }
 
 /**
- * Takes a JJParser error message and, if it points to a specific position in source file,
- * highlight the position.
- * @param message The expected message shape is like
- *                "SyntaxError: Line 15 Char 6 Token "{" continuing with ..."
- * @returns Whether the JJParser error message contains the description of a position
+ * Adds a warning diagnostic for a JJParser-reported token or character.
+ * The squiggle and diagnostic message are cleared on document edit or before
+ * each new pretty-printer run.
  */
-async function revealParserErrorLocation(document: vscode.TextDocument, message: string): Promise<boolean> {
-  const position = parserErrorPosition(document, message);
+function setJJParserErrorDiagnostic(
+  diagnostics: vscode.DiagnosticCollection,
+  document: vscode.TextDocument,
+  errorLocation: JJParserErrorLocation | undefined
+) {
+  if (!errorLocation?.reportedText) {
+    return;
+  }
+
+  const diagnostic = new vscode.Diagnostic(
+    errorLocation.range,
+    errorLocation.message,
+    vscode.DiagnosticSeverity.Warning
+  );
+  diagnostic.source = 'TPTP pretty-printer (JJParser)';
+  diagnostics.set(document.uri, [diagnostic]);
+}
+
+/**
+ * Takes a JJParser error location and, if it points to a specific position in source file,
+ * highlight the position.
+ * @param errorLocation The location parsed from a JJParser error message.
+ */
+async function revealJJParserErrorLocation(
+  document: vscode.TextDocument,
+  errorLocation: JJParserErrorLocation | undefined
+): Promise<void>
+{
+  const position = errorLocation?.position;
   if (!position) {
-    return false;
+    return;
   }
 
   const range = new vscode.Range(position, position);
@@ -114,10 +159,16 @@ async function revealParserErrorLocation(document: vscode.TextDocument, message:
   });
   editor.selection = new vscode.Selection(position, position);
   editor.revealRange(range, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
-  return true;
 }
 
 export function activate(context: ExtensionContext) {
+  const prettyPrinterDiagnostics = vscode.languages.createDiagnosticCollection('tptpPrettyPrinter');
+  context.subscriptions.push(prettyPrinterDiagnostics);
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument(event => {
+      prettyPrinterDiagnostics.delete(event.document.uri);
+    })
+  );
 
   async function fetchList(url: string, inputType: string = 'radio') {
     const response = await fetch(url, {
@@ -413,7 +464,7 @@ export function activate(context: ExtensionContext) {
 
       }
     })
-  })
+  });
 
   context.subscriptions.push(prepareProblem);
 
@@ -427,6 +478,9 @@ export function activate(context: ExtensionContext) {
       }
       uri = activeEditor.document.uri;
     }
+
+    // Clear stale parser diagnostics before each new pretty-printer run.
+    prettyPrinterDiagnostics.delete(uri);
 
     const document = await vscode.workspace.openTextDocument(uri);
     const sourceText = document.getText();
@@ -453,8 +507,10 @@ export function activate(context: ExtensionContext) {
       return;
     }
     if (localResult.kind === 'parser-error') {
-      const foundErrorLocation = await revealParserErrorLocation(document, localResult.message);
-      if (foundErrorLocation) {
+      const errorLocation = getJJParserErrorLocation(document, localResult.message);
+      if (errorLocation !== undefined) {
+        setJJParserErrorDiagnostic(prettyPrinterDiagnostics, document, errorLocation);
+        await revealJJParserErrorLocation(document, errorLocation);
         vscode.window.showErrorMessage(`Failed to format TPTP file: ${localResult.message}`);
         return;
       } else {
@@ -477,7 +533,9 @@ export function activate(context: ExtensionContext) {
     if (formattedOutput !== undefined) {
       const lastLine = lastNonemptyLine(formattedOutput);
       if (lastLine?.startsWith('ERROR: ')) {
-        await revealParserErrorLocation(document, lastLine);
+        const errorLocation = getJJParserErrorLocation(document, lastLine);
+        setJJParserErrorDiagnostic(prettyPrinterDiagnostics, document, errorLocation);
+        await revealJJParserErrorLocation(document, errorLocation);
         vscode.window.showErrorMessage(`\
           Failed to format TPTP file: \
           remote formatter provided by SystemB4TPTP exited with ${lastLine}`);
@@ -488,7 +546,7 @@ export function activate(context: ExtensionContext) {
       }
     }
     
-  })
+  });
 
   context.subscriptions.push(formatProblem);
 
@@ -1785,7 +1843,7 @@ export function activate(context: ExtensionContext) {
       }
     });
 
-  })
+  });
 
   context.subscriptions.push(proveProblemMultiple);
 
@@ -2122,7 +2180,7 @@ export function activate(context: ExtensionContext) {
         }
       }
     })
-  })
+  });
 
   context.subscriptions.push(processSolution);
 
@@ -2463,7 +2521,7 @@ export function activate(context: ExtensionContext) {
         }
       }
     })
-  })
+  });
 
   context.subscriptions.push(processSolutionMultiple);
 
@@ -2509,7 +2567,7 @@ export function activate(context: ExtensionContext) {
     } else {
       vscode.window.showInformationMessage('No problem selected.');
     }
-  })
+  });
 
   context.subscriptions.push(importProblem);
 
@@ -2556,7 +2614,7 @@ export function activate(context: ExtensionContext) {
       vscode.window.showInformationMessage('No Solution selected.');
     }
 
-  })
+  });
 
   context.subscriptions.push(importSolution);
 
