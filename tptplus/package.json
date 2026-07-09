@@ -48,7 +48,7 @@
     "commands": [
       {
         "command": "tptp.formatDocument",
-        "title": "TPTP: Format Document"
+        "title": "TPTP: Format Document (legacy)"
       },
       {
         "command": "tptp.prepareProblem",
