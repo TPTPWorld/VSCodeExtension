@@ -36,6 +36,7 @@ export async function formatTptpLocally(
 
   // // debugging: uncomment this to simulate a failure of the local JJParser
   // return { kind: 'parser-error', message: '(This is an error message for debugging that does not point to any specific location in source file.)' };
+  // return { kind: 'unknown-error' };
 
   return new Promise(resolve => {
     let stdout = '';

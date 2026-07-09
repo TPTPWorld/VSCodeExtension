@@ -20,6 +20,8 @@ typedef struct {
     READFILE InputStream;
     SIGNATURE Signature;
     ANNOTATEDFORMULA AnnotatedFormula;
+    char * NamesBuffer;
+    int NamesBufferSize;
     FILE * OutputStream;
     char * OutputBuffer;
     size_t OutputLength;
@@ -51,6 +53,24 @@ ThisNodeType != blank_line) {
     return(1);
 }
 
+// Mirror `CheckOneDuplicateName` in NumberNames.c of TPTP4X
+// TODO: improve time complexity? perhaps using ANTLR-based parser?
+static int CheckOneDuplicateNameLikeTptp4X(TPTP4XPrettyState * State) {
+
+    char * Name;
+
+    if ((Name = GetName(State->AnnotatedFormula, NULL)) != NULL) {
+        if (NameInList(Name, State->NamesBuffer)) {
+            printf("ERROR: Duplicate annotated formula name \"%s\"\n", Name);
+            fflush(stdout);
+            return(0);
+        }
+        ExtendString(&(State->NamesBuffer), Name, &(State->NamesBufferSize));
+        ExtendString(&(State->NamesBuffer), "\n", &(State->NamesBufferSize));
+    }
+    return(1);
+}
+
 // This runs on normal returns only. Fatal JJParser errors exit the disposable
 // child process before control reaches this cleanup path.
 static void CleanupPrettyState(TPTP4XPrettyState * State) {
@@ -69,6 +89,9 @@ static void CleanupPrettyState(TPTP4XPrettyState * State) {
     }
     if (State->OutputStream != NULL) {
         fclose(State->OutputStream);
+    }
+    if (State->NamesBuffer != NULL) {
+        Free((void **)&(State->NamesBuffer));
     }
     free(State->OutputBuffer);
     free(State);
@@ -116,11 +139,17 @@ char * tptp4x_pretty_print_tptp(const char * Input) {
     NextToken(State->InputStream);
     State->Signature = NewSignature();
     LastNodeType = nontype;
+    State->NamesBuffer = (char *)Malloc(sizeof(String));
+    State->NamesBuffer[0] = '\0';
+    State->NamesBufferSize = sizeof(String);
 
     // Reading formulae one-by-one
     while (!CheckTokenType(State->InputStream, endeof)) {
         State->AnnotatedFormula = ParseAndUseAnnotatedFormula(State->InputStream, State->Signature);
         if (State->AnnotatedFormula == NULL) {
+            goto finish;
+        }
+        if (!CheckOneDuplicateNameLikeTptp4X(State)) {
             goto finish;
         }
         if (!PrintAnnotatedFormulaLikeFtptp(State, &LastNodeType)) {
