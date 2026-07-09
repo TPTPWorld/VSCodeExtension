@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import createTPTP4X from '../../resources/wasm/tptp4X_wasm.js';
+import { isDuplicateFormulaNameError } from './prettyPrintErrors';
 
 const WASM_DIR = path.join(__dirname, '..', '..', 'resources', 'wasm');
 const WASM_BIN_PATH = path.join(WASM_DIR, 'tptp4X_wasm.wasm');
@@ -45,6 +46,10 @@ function parserDiagnosticMessage(): string | undefined {
   }
 
   const message = wasmDiagnostics.slice(diagnosticStart).join('\n');
+  if (isDuplicateFormulaNameError(message)) {
+    return message.trim();
+  }
+
   const errorMatch = message.match(/^ERROR:\s*(.*)$/s);
   if (errorMatch) {
     return errorMatch[1].trim();

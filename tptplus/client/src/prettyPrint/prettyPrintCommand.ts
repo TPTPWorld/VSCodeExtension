@@ -6,6 +6,7 @@ import {
   setJJParserErrorDiagnostic
 } from './jjParserDiagnostics';
 import { formatTptpLocally } from './localPrettyPrint';
+import { isDuplicateFormulaNameError } from './prettyPrintErrors';
 import { createSystemB4TptpForm } from '../systemTptpForms';
 import {
   extractSystemB4TptpOutput,
@@ -41,34 +42,46 @@ export function registerPrettyPrintCommand(
 
     // a whitespace-only file should become empty
     if (!sourceText.trim()) {
-      edit.replace(uri, fullTextRange, "");
+      edit.replace(uri, fullTextRange, '');
       await vscode.workspace.applyEdit(edit);
       return;
     }
 
-    // call the local pretty-printer (JJParser)
+    // run the local pretty-printer (JJParser)
     const localResult = await formatTptpLocally(context, sourceText);
+
     if (localResult.kind === 'success') {
       edit.replace(uri, fullTextRange, localResult.output);
       await vscode.workspace.applyEdit(edit);
       return;
     }
+
     if (localResult.kind === 'parser-error') {
+      if (isDuplicateFormulaNameError(localResult.message)) {
+        vscode.window.showErrorMessage(`Failed to format TPTP file: ${localResult.message}`);
+        return;
+      }
+
       const errorLocation = getJJParserErrorLocation(document, localResult.message);
       if (errorLocation !== undefined) {
         setJJParserErrorDiagnostic(prettyPrintDiagnostics, document, errorLocation);
         await revealJJParserErrorLocation(document, errorLocation);
         vscode.window.showErrorMessage(`Failed to format TPTP file: ${localResult.message}`);
         return;
-      } else {
-        vscode.window.showWarningMessage(`\
-          Failed to format TPTP file locally: ${localResult.message}
-          Trying the remote formatter provided by SystemB4TPTP...`);
       }
     }
 
-    // Fall back to remote pretty-printer if the local pretty-printer fails on an unknown error
-    // or an error that does not point to any specific location in `sourceText`.
+    // Fall back to remote pretty-printer if the local pretty-printer fails on a critical error,
+    // i.e., either an `unknown-error`, or a `parser-error` that is not a duplicate formula name
+    // error and does not point to any specific location in `sourceText`.
+    const localFailMessage =
+      localResult.kind === 'parser-error' ? localResult.message : 'unknown error';
+    vscode.window.showWarningMessage(
+        `Failed to format TPTP file locally: ${localFailMessage}. ` +
+        'Trying the remote formatter provided by SystemB4TPTP...'
+    );
+
+    // run the remote pretty-printer (provided by SystemB4TPTP)
     const form = createSystemB4TptpForm(sourceText, null);
     const response = await fetch('https://tptp.org/cgi-bin/SystemOnTPTPFormReply', {
       method: 'POST',
@@ -83,13 +96,14 @@ export function registerPrettyPrintCommand(
         const errorLocation = getJJParserErrorLocation(document, lastLine);
         setJJParserErrorDiagnostic(prettyPrintDiagnostics, document, errorLocation);
         await revealJJParserErrorLocation(document, errorLocation);
-        vscode.window.showErrorMessage(`\
-          Failed to format TPTP file: \
-          remote formatter provided by SystemB4TPTP exited with ${lastLine}`);
+        vscode.window.showErrorMessage(
+          'Failed to format TPTP file: ' +
+          `remote formatter provided by SystemB4TPTP exited with ${lastLine}`
+        );
       } else {
         edit.replace(uri, fullTextRange, formattedOutput);
         await vscode.workspace.applyEdit(edit);
-        vscode.window.showInformationMessage("Format TPTP file successful.");
+        vscode.window.showInformationMessage('Format TPTP file successful.');
       }
     }
 
