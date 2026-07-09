@@ -158,12 +158,16 @@ Fixed issue where some greater-than-signs are not handled correctly by command "
 
 ### 0.1.9
 
-Added local pretty printer so that "Format TPTP File" works without Internet connection.
-The original remote pretty printer is kept as a fallback.
+Added local pretty-printer so that "Format TPTP File" works without Internet connection.
+The original remote pretty-printer is kept as a fallback.
 
 ### 0.1.10
 
 Added error handling for "Format TPTP File": display error message and jump to position of syntax error.
+
+### 0.1.11
+
+Added title-menu button for "TPTP: Check Syntax and Format TPTP File"; improved error handling for pretty-printer.
 
 ---
 
