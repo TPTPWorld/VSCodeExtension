@@ -2,7 +2,7 @@ import { spawn } from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-const RUNNER_PATH = path.join('client', 'out', 'localPrettyPrinterProcess.js');
+const RUNNER_PATH = path.join('client', 'out', 'prettyPrint', 'localPrettyPrintProcess.js');
 const LOCAL_PRETTY_PRINT_TIMEOUT_MS = 10000;  // TODO: make this configurable
 
 export type LocalPrettyPrintResult =

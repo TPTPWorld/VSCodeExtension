@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(TPTPPrettyPrinter LANGUAGES C)
+project(TPTPPrettyPrint LANGUAGES C)
 
 # provide clues to IDE IntelliSense
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

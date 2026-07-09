@@ -55,7 +55,7 @@
         "title": "TPTP: Prepare Problem"
       },
       {
-        "command": "tptp.formatProblem",
+        "command": "tptp.prettyPrint",
         "title": "TPTP: Format TPTP File"
       },
       {
@@ -91,7 +91,7 @@
           "group": "navigation"
         },
         {
-          "command": "tptp.formatProblem",
+          "command": "tptp.prettyPrint",
           "when": "editorLangId == tptp",
           "group": "navigation"
         },

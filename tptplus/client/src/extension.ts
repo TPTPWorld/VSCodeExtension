@@ -11,162 +11,17 @@ import {
   TransportKind
 } from 'vscode-languageclient/node';
 
-import {
-  createSystemB4TptpForm
-} from './systemTptpForms';
-import { formatTptpLocally } from './localPrettyPrinter';
+import { createSystemB4TptpForm } from './systemTptpForms';
+import { registerPrettyPrintCommand } from './prettyPrint/prettyPrintCommand';
 
 let client: LanguageClient;
 
-interface JJParserErrorLocation {
-  position: vscode.Position;
-  range: vscode.Range;
-  message: string;
-  reportedText?: string;
-}
-
-/**
- * Extract the text between `<PRE>` and `</PRE>` from the HTML response of System B4 TPTP.
- */
-function extractSystemB4TptpOutput(html: string): string | undefined {
-  const dom = new JSDOM(html);
-  const preText = dom.window.document.querySelector('pre')?.textContent ?? undefined;
-  if (preText === undefined) {
-    return undefined;
-  }
-
-  const startMarker = '% START OF SYSTEM OUTPUT';
-  const endMarker = '% END OF SYSTEM OUTPUT';
-  const lines = preText.split('\n');
-  const startLine = lines.findIndex(line => line.trim() === startMarker);
-  let endLine = -1;  // TODO: use `findLastIndex`?
-  for (let i = lines.length - 1; i >= Math.max(0, startLine); i -= 1) {
-    if (lines[i].trim() === endMarker) {
-      endLine = i;
-      break;
-    }
-  }
-
-  if (startLine === -1 || endLine === -1 || startLine >= endLine) {
-    return undefined;
-  }
-
-  return lines.slice(startLine + 1, endLine).join('\n');
-}
-
-function lastNonemptyLine(text: string): string | undefined {
-  const lines = text.split('\n');
-  for (let i = lines.length - 1; i >= 0; i -= 1) {
-    const line = lines[i].trim();
-    if (line) {
-      return line;
-    }
-  }
-
-  return undefined;
-}
-
-/**
- * Takes a JJParser error message and turns it into a VS Code location.
- * @param message The expected message shape is like
- *                'SyntaxError: Line 15 Char 6 Token "{" continuing with ...' or
- *                'SyntaxError: Line 11 Char 42 Character "[" continuing with ...'
- * @returns VS Code location or undefined
- */
-function getJJParserErrorLocation(document: vscode.TextDocument, message: string):
-  JJParserErrorLocation | undefined
-{
-  const match = message.match(/\bLine\s+(\d+)\s+Char\s+(\d+)(?:\s+(?:Token|Character)\s+"([\s\S]*?)"\s+continuing\b)?/);
-  if (!match) {
-    return undefined;
-  }
-
-  const reportedLine = Number.parseInt(match[1], 10);
-  const reportedCharacter = Number.parseInt(match[2], 10);
-  if (Number.isNaN(reportedLine) || Number.isNaN(reportedCharacter)) {
-    return undefined;
-  }
-
-  const lineIndex = Math.max(0, Math.min(reportedLine - 1, document.lineCount - 1));
-  const lineText = document.lineAt(lineIndex).text;
-  let characterIndex = Math.max(0, Math.min(reportedCharacter - 1, lineText.length));
-  const reportedText = match[3];
-
-  // If the error message reports a token or character, try to move cursor to its beginning.
-  if (reportedText) {
-    const reportedTextIndex = lineText.slice(0, characterIndex + 1).lastIndexOf(reportedText);
-    if (reportedTextIndex >= 0) {
-      characterIndex = reportedTextIndex;
-    }
-  }
-
-  const startPosition = new vscode.Position(lineIndex, characterIndex);
-  const endCharacterIndex = reportedText
-    ? Math.min(lineText.length, characterIndex + reportedText.length)
-    : characterIndex;
-  const endPosition = new vscode.Position(lineIndex, endCharacterIndex);
-
-  return {
-    position: startPosition,
-    range: new vscode.Range(startPosition, endPosition),
-    message: message,
-    reportedText: reportedText
-  };
-}
-
-/**
- * Adds a warning diagnostic for a JJParser-reported token or character.
- * The squiggle and diagnostic message are cleared on document edit or before
- * each new pretty-printer run.
- */
-function setJJParserErrorDiagnostic(
-  diagnostics: vscode.DiagnosticCollection,
-  document: vscode.TextDocument,
-  errorLocation: JJParserErrorLocation | undefined
-) {
-  if (!errorLocation?.reportedText) {
-    return;
-  }
-
-  const diagnostic = new vscode.Diagnostic(
-    errorLocation.range,
-    errorLocation.message,
-    vscode.DiagnosticSeverity.Warning
-  );
-  diagnostic.source = 'TPTP pretty-printer (JJParser)';
-  diagnostics.set(document.uri, [diagnostic]);
-}
-
-/**
- * Takes a JJParser error location and, if it points to a specific position in source file,
- * highlight the position.
- * @param errorLocation The location parsed from a JJParser error message.
- */
-async function revealJJParserErrorLocation(
-  document: vscode.TextDocument,
-  errorLocation: JJParserErrorLocation | undefined
-): Promise<void>
-{
-  const position = errorLocation?.position;
-  if (!position) {
-    return;
-  }
-
-  const range = new vscode.Range(position, position);
-  const editor = await vscode.window.showTextDocument(document, {
-    preview: false,
-    selection: range,
-  });
-  editor.selection = new vscode.Selection(position, position);
-  editor.revealRange(range, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
-}
-
 export function activate(context: ExtensionContext) {
-  const prettyPrinterDiagnostics = vscode.languages.createDiagnosticCollection('tptpPrettyPrinter');
-  context.subscriptions.push(prettyPrinterDiagnostics);
+  const prettyPrintDiagnostics = vscode.languages.createDiagnosticCollection('tptpPrettyPrint');
+  context.subscriptions.push(prettyPrintDiagnostics);
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument(event => {
-      prettyPrinterDiagnostics.delete(event.document.uri);
+      prettyPrintDiagnostics.delete(event.document.uri);
     })
   );
 
@@ -469,86 +324,9 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(prepareProblem);
 
   //@ FORMAT A PROBLEM BY RUNNING JJPARSER LOCALLY, USING REMOTE SYSTEMB4TPTP AS FALLBACK
-  const formatProblem = vscode.commands.registerCommand('tptp.formatProblem', async (uri: vscode.Uri) => {
-    if (!uri) {
-      const activeEditor = vscode.window.activeTextEditor;
-      if (!activeEditor) {
-        vscode.window.showErrorMessage('No active TPTP file open');
-        return;
-      }
-      uri = activeEditor.document.uri;
-    }
-
-    // Clear stale parser diagnostics before each new pretty-printer run.
-    prettyPrinterDiagnostics.delete(uri);
-
-    const document = await vscode.workspace.openTextDocument(uri);
-    const sourceText = document.getText();
-    const fullTextRange = new vscode.Range(
-      document.positionAt(0),
-      document.positionAt(sourceText.length)
-    );
-
-    // use WorkspaceEdit to edit any URI's document, even if it's invisible
-    const edit = new vscode.WorkspaceEdit();
-
-    // a whitespace-only file should become empty
-    if (!sourceText.trim()) {
-      edit.replace(uri, fullTextRange, "");
-      await vscode.workspace.applyEdit(edit);
-      return;
-    }
-
-    // call the local pretty-printer (JJParser)
-    const localResult = await formatTptpLocally(context, sourceText);
-    if (localResult.kind === 'success') {
-      edit.replace(uri, fullTextRange, localResult.output);
-      await vscode.workspace.applyEdit(edit);
-      return;
-    }
-    if (localResult.kind === 'parser-error') {
-      const errorLocation = getJJParserErrorLocation(document, localResult.message);
-      if (errorLocation !== undefined) {
-        setJJParserErrorDiagnostic(prettyPrinterDiagnostics, document, errorLocation);
-        await revealJJParserErrorLocation(document, errorLocation);
-        vscode.window.showErrorMessage(`Failed to format TPTP file: ${localResult.message}`);
-        return;
-      } else {
-        vscode.window.showWarningMessage(`\
-          Failed to format TPTP file locally: ${localResult.message}
-          Trying the remote formatter provided by SystemB4TPTP...`);
-      }
-    }
-
-    // Fall back to remote pretty-printer if the local pretty-printer fails on an unknown error
-    // or an error that does not point to any specific location in `sourceText`.
-    const form = createSystemB4TptpForm(sourceText, null);
-    const response = await fetch('https://tptp.org/cgi-bin/SystemOnTPTPFormReply', {
-      method: 'POST',
-      body: form
-    });
-    const text = await response.text();
-    const formattedOutput = extractSystemB4TptpOutput(text);
-
-    if (formattedOutput !== undefined) {
-      const lastLine = lastNonemptyLine(formattedOutput);
-      if (lastLine?.startsWith('ERROR: ')) {
-        const errorLocation = getJJParserErrorLocation(document, lastLine);
-        setJJParserErrorDiagnostic(prettyPrinterDiagnostics, document, errorLocation);
-        await revealJJParserErrorLocation(document, errorLocation);
-        vscode.window.showErrorMessage(`\
-          Failed to format TPTP file: \
-          remote formatter provided by SystemB4TPTP exited with ${lastLine}`);
-      } else {
-        edit.replace(uri, fullTextRange, formattedOutput);
-        await vscode.workspace.applyEdit(edit);
-        vscode.window.showInformationMessage("Format TPTP file successful.");
-      }
-    }
-    
-  });
-
-  context.subscriptions.push(formatProblem);
+  context.subscriptions.push(
+    registerPrettyPrintCommand(context, prettyPrintDiagnostics)
+  );
 
   //@ RUN A THEOREM THROUGH SYSTEMONTPTP                                              
   const proveProblem = vscode.commands.registerCommand('tptp.proveProblem', async (uri: vscode.Uri) => {
