@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import createTPTP4X from '../resources/wasm/tptp4X_wasm.js';
+import createTPTP4X from '../../resources/wasm/tptp4X_wasm.js';
 
-const WASM_DIR = path.join(__dirname, '..', 'resources', 'wasm');
+const WASM_DIR = path.join(__dirname, '..', '..', 'resources', 'wasm');
 const WASM_BIN_PATH = path.join(WASM_DIR, 'tptp4X_wasm.wasm');
 
 export type TPTP4XModule = {
