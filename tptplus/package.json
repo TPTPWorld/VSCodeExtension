@@ -56,10 +56,10 @@
       },
       {
         "command": "tptp.prettyPrint",
-        "title": "TPTP: Check Syntax and Format TPTP File",
+        "title": "TPTP: Pretty-Print TPTP File",
         "icon": {
-          "light": "./images/icons/Syntax.png",
-          "dark": "./images/icons/Syntax.png"
+          "light": "./images/icons/PrettyPrint.png",
+          "dark": "./images/icons/PrettyPrint.png"
         }
       },
       {
