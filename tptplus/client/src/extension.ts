@@ -13,6 +13,7 @@ import {
 
 import { errorMessage } from './errorMessage';
 import { createSystemB4TptpForm } from './systemTptpForms';
+import { registerAntlrParserCommand } from './antlrParser/command';
 import { registerPrettyPrintCommand } from './prettyPrint/command';
 import { registerTypeCheckCommand } from './typeCheck/command';
 
@@ -2410,7 +2411,8 @@ export function activate(context: ExtensionContext) {
   );
 
   // Start the client (and server)
-  client.start();
+  const clientReady = client.start();
+  context.subscriptions.push(registerAntlrParserCommand(client, clientReady));
 }
 
 export function deactivate(): Thenable<void> | undefined {
