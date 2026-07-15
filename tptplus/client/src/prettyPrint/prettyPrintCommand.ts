@@ -41,8 +41,13 @@ async function applyPrettyPrintResult(
     document.positionAt(originalText.length)
   );
   edit.replace(document.uri, fullTextRange, prettyPrintResult);
-  await vscode.workspace.applyEdit(edit);
-  vscode.window.showInformationMessage('TPTP file formatted successfully.');
+
+  const isEditApplied = await vscode.workspace.applyEdit(edit);
+  if (!isEditApplied) {
+    vscode.window.showErrorMessage('Pretty-printer succeeded, but VS Code could not apply the formatted output.');
+  } else {
+    vscode.window.showInformationMessage('TPTP file formatted successfully.');
+  }
 }
 
 /** Publishes and reveals a parser diagnostic, then shows its error message in a toast. */
