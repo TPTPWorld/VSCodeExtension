@@ -38,6 +38,10 @@ export async function formatTptpLocally(
   // return { kind: 'parser-error', message: '(This is an error message for debugging that does not point to any specific location in source file.)' };
   // return { kind: 'unknown-error' };
 
+  if (!input.trim()) { // a whitespace-only TPTP file should become empty
+    return { kind: 'success', output: '' };
+  }
+
   return new Promise(resolve => {
     let stdout = '';
     let stderr = '';

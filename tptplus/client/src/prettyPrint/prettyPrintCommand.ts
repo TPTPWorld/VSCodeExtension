@@ -40,13 +40,6 @@ export function registerPrettyPrintCommand(
     // use WorkspaceEdit to edit any URI's document, even if it's invisible
     const edit = new vscode.WorkspaceEdit();
 
-    // a whitespace-only file should become empty
-    if (!sourceText.trim()) {
-      edit.replace(uri, fullTextRange, '');
-      await vscode.workspace.applyEdit(edit);
-      return;
-    }
-
     // run the local pretty-printer (JJParser)
     const localResult = await formatTptpLocally(context, sourceText);
 
