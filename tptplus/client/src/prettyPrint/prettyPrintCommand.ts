@@ -14,12 +14,20 @@ import {
   lastNonemptyLine
 } from '../systemB4TptpOutput';
 
-/** Applies a pretty-print result to a document and shows success info in a toast. */
+/** Applies a pretty-print result if the document has not changed since formatting began. */
 async function applyPrettyPrintResult(
   document: vscode.TextDocument,
+  originalVersion: number,
   originalText: string,
   prettyPrintResult: string
 ): Promise<void> {
+  if (document.version !== originalVersion) {
+    vscode.window.showWarningMessage(
+      'TPTP file changed while formatting. Please run the pretty-printer again.'
+    );
+    return;
+  }
+
   if (originalText === prettyPrintResult) {
     vscode.window.showInformationMessage('TPTP file is already formatted.');
     return;
@@ -93,13 +101,14 @@ export function registerPrettyPrintCommand(
     prettyPrintDiagnostics.delete(uri);
 
     const document = await vscode.workspace.openTextDocument(uri);
+    const sourceVersion = document.version;
     const sourceText = document.getText();
 
     // run the local pretty-printer (JJParser)
     const localResult = await formatTptpLocally(context, sourceText);
 
     if (localResult.kind === 'success') {
-      await applyPrettyPrintResult(document, sourceText, localResult.output);
+      await applyPrettyPrintResult(document, sourceVersion, sourceText, localResult.output);
       return;
     }
 
@@ -152,7 +161,7 @@ export function registerPrettyPrintCommand(
         `the SystemB4TPTP remote pretty-printer reported ${lastLine}`
       );
     } else {
-      await applyPrettyPrintResult(document, sourceText, remoteResult);
+      await applyPrettyPrintResult(document, sourceVersion, sourceText, remoteResult);
     }
 
   });
