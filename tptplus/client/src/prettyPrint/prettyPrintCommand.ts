@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 
 import {
   getJJParserErrorLocation,
+  type JJParserErrorLocation,
   revealJJParserErrorLocation,
   setJJParserErrorDiagnostic
 } from './jjParserDiagnostics';
@@ -33,6 +34,17 @@ async function applyPrettyPrintResult(
   edit.replace(document.uri, fullTextRange, prettyPrintResult);
   await vscode.workspace.applyEdit(edit);
   vscode.window.showInformationMessage('TPTP file formatted successfully.');
+}
+
+async function reportPrettyPrintError(
+  prettyPrintDiagnostics: vscode.DiagnosticCollection,
+  document: vscode.TextDocument,
+  errorLocation: JJParserErrorLocation | undefined,
+  errorMessage: string
+): Promise<void> {
+  setJJParserErrorDiagnostic(prettyPrintDiagnostics, document, errorLocation);
+  await revealJJParserErrorLocation(document, errorLocation);
+  vscode.window.showErrorMessage(errorMessage);
 }
 
 // TODO: use the VSCode formatting API:
@@ -73,9 +85,12 @@ export function registerPrettyPrintCommand(
 
       const errorLocation = getJJParserErrorLocation(document, localResult.message);
       if (errorLocation !== undefined) {
-        setJJParserErrorDiagnostic(prettyPrintDiagnostics, document, errorLocation);
-        await revealJJParserErrorLocation(document, errorLocation);
-        vscode.window.showErrorMessage(`Failed to format TPTP file: ${localResult.message}`);
+        await reportPrettyPrintError(
+          prettyPrintDiagnostics,
+          document,
+          errorLocation,
+          `Failed to format TPTP file: ${localResult.message}`
+        );
         return;
       }
     }
@@ -98,19 +113,26 @@ export function registerPrettyPrintCommand(
     });
     const remoteResult = extractSystemB4TptpOutput(await response.text());
 
-    if (remoteResult !== undefined) {
-      const lastLine = lastNonemptyLine(remoteResult);
-      if (lastLine?.startsWith('ERROR: ')) {
-        const errorLocation = getJJParserErrorLocation(document, lastLine);
-        setJJParserErrorDiagnostic(prettyPrintDiagnostics, document, errorLocation);
-        await revealJJParserErrorLocation(document, errorLocation);
-        vscode.window.showErrorMessage(
-          'Failed to format TPTP file: ' +
-          `the SystemB4TPTP remote pretty-printer reported ${lastLine}`
-        );
-      } else {
-        await applyPrettyPrintResult(document, sourceText, remoteResult);
-      }
+    if (remoteResult === undefined) {
+      vscode.window.showErrorMessage(
+        'Failed to format TPTP file: ' +
+        'the SystemB4TPTP remote pretty-printer failed with unknown error'
+      );
+      return;
+    }
+
+    const lastLine = lastNonemptyLine(remoteResult);
+    if (lastLine?.startsWith('ERROR: ')) {
+      const errorLocation = getJJParserErrorLocation(document, lastLine);
+      await reportPrettyPrintError(
+        prettyPrintDiagnostics,
+        document,
+        errorLocation,
+        'Failed to format TPTP file: ' +
+        `the SystemB4TPTP remote pretty-printer reported ${lastLine}`
+      );
+    } else {
+      await applyPrettyPrintResult(document, sourceText, remoteResult);
     }
 
   });
