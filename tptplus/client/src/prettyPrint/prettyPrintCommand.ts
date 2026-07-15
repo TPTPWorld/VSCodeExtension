@@ -13,6 +13,30 @@ import {
   lastNonemptyLine
 } from '../systemB4TptpOutput';
 
+async function applyPrettyPrintResult(
+  document: vscode.TextDocument,
+  originalText: string,
+  prettyPrintResult: string
+): Promise<void> {
+  if (originalText === prettyPrintResult) {
+    vscode.window.showInformationMessage('TPTP file is already formatted.');
+    return;
+  }
+
+  // use WorkspaceEdit to edit any URI's document, even if it's invisible
+  const edit = new vscode.WorkspaceEdit();
+
+  const fullTextRange = new vscode.Range(
+    document.positionAt(0),
+    document.positionAt(originalText.length)
+  );
+  edit.replace(document.uri, fullTextRange, prettyPrintResult);
+  await vscode.workspace.applyEdit(edit);
+  vscode.window.showInformationMessage('TPTP file formatted successfully.');
+}
+
+// TODO: use the VSCode formatting API:
+// https://code.visualstudio.com/blogs/2016/11/15/formatters-best-practices
 export function registerPrettyPrintCommand(
   context: vscode.ExtensionContext,
   prettyPrintDiagnostics: vscode.DiagnosticCollection
@@ -21,7 +45,7 @@ export function registerPrettyPrintCommand(
     if (!uri) {
       const activeEditor = vscode.window.activeTextEditor;
       if (!activeEditor) {
-        vscode.window.showErrorMessage('No active TPTP file open');
+        vscode.window.showErrorMessage('No TPTP file is currently open.');
         return;
       }
       uri = activeEditor.document.uri;
@@ -32,20 +56,12 @@ export function registerPrettyPrintCommand(
 
     const document = await vscode.workspace.openTextDocument(uri);
     const sourceText = document.getText();
-    const fullTextRange = new vscode.Range(
-      document.positionAt(0),
-      document.positionAt(sourceText.length)
-    );
-
-    // use WorkspaceEdit to edit any URI's document, even if it's invisible
-    const edit = new vscode.WorkspaceEdit();
 
     // run the local pretty-printer (JJParser)
     const localResult = await formatTptpLocally(context, sourceText);
 
     if (localResult.kind === 'success') {
-      edit.replace(uri, fullTextRange, localResult.output);
-      await vscode.workspace.applyEdit(edit);
+      await applyPrettyPrintResult(document, sourceText, localResult.output);
       return;
     }
 
@@ -80,23 +96,20 @@ export function registerPrettyPrintCommand(
       method: 'POST',
       body: form
     });
-    const text = await response.text();
-    const formattedOutput = extractSystemB4TptpOutput(text);
+    const remoteResult = extractSystemB4TptpOutput(await response.text());
 
-    if (formattedOutput !== undefined) {
-      const lastLine = lastNonemptyLine(formattedOutput);
+    if (remoteResult !== undefined) {
+      const lastLine = lastNonemptyLine(remoteResult);
       if (lastLine?.startsWith('ERROR: ')) {
         const errorLocation = getJJParserErrorLocation(document, lastLine);
         setJJParserErrorDiagnostic(prettyPrintDiagnostics, document, errorLocation);
         await revealJJParserErrorLocation(document, errorLocation);
         vscode.window.showErrorMessage(
           'Failed to format TPTP file: ' +
-          `remote formatter provided by SystemB4TPTP exited with ${lastLine}`
+          `the SystemB4TPTP remote pretty-printer reported ${lastLine}`
         );
       } else {
-        edit.replace(uri, fullTextRange, formattedOutput);
-        await vscode.workspace.applyEdit(edit);
-        vscode.window.showInformationMessage('Format TPTP file successful.');
+        await applyPrettyPrintResult(document, sourceText, remoteResult);
       }
     }
 
