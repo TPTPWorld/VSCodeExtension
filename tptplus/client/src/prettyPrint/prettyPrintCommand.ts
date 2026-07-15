@@ -14,6 +14,7 @@ import {
   lastNonemptyLine
 } from '../systemB4TptpOutput';
 
+/** Applies a pretty-print result to a document and shows success info in a toast. */
 async function applyPrettyPrintResult(
   document: vscode.TextDocument,
   originalText: string,
@@ -36,6 +37,7 @@ async function applyPrettyPrintResult(
   vscode.window.showInformationMessage('TPTP file formatted successfully.');
 }
 
+/** Publishes and reveals a parser diagnostic, then shows its error message in a toast. */
 async function reportPrettyPrintError(
   prettyPrintDiagnostics: vscode.DiagnosticCollection,
   document: vscode.TextDocument,
@@ -47,8 +49,32 @@ async function reportPrettyPrintError(
   vscode.window.showErrorMessage(errorMessage);
 }
 
+/**
+ * Formats TPTP source text using the SystemB4TPTP remote pretty-printer.
+ * @throws If the request fails, the response is unsuccessful, or the formatted output cannot be extracted.
+ */
+async function formatTptpRemotely(sourceText: string): Promise<string> {
+  const form = createSystemB4TptpForm(sourceText, null);
+  const response = await fetch('https://tptp.org/cgi-bin/SystemOnTPTPFormReply', {
+    method: 'POST',
+    body: form
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText || 'request failed'}`);
+  }
+
+  const result = extractSystemB4TptpOutput(await response.text());
+  if (result === undefined) {
+    throw new Error('unknown error');
+  }
+
+  return result;
+}
+
 // TODO: use the VSCode formatting API:
 // https://code.visualstudio.com/blogs/2016/11/15/formatters-best-practices
+/** Registers the pretty-print command with local formatting and a remote fallback. */
 export function registerPrettyPrintCommand(
   context: vscode.ExtensionContext,
   prettyPrintDiagnostics: vscode.DiagnosticCollection
@@ -106,18 +132,12 @@ export function registerPrettyPrintCommand(
     );
 
     // run the remote pretty-printer (provided by SystemB4TPTP)
-    const form = createSystemB4TptpForm(sourceText, null);
-    const response = await fetch('https://tptp.org/cgi-bin/SystemOnTPTPFormReply', {
-      method: 'POST',
-      body: form
-    });
-    const remoteResult = extractSystemB4TptpOutput(await response.text());
-
-    if (remoteResult === undefined) {
-      vscode.window.showErrorMessage(
-        'Failed to format TPTP file: ' +
-        'the SystemB4TPTP remote pretty-printer failed with unknown error'
-      );
+    let remoteResult: string;
+    try {
+      remoteResult = await formatTptpRemotely(sourceText);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      vscode.window.showErrorMessage(`Failed to format TPTP file remotely: ${errorMessage}`);
       return;
     }
 
