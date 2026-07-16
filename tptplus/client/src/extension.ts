@@ -17,14 +17,6 @@ import { registerPrettyPrintCommand } from './prettyPrint/prettyPrintCommand';
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
-  const prettyPrintDiagnostics = vscode.languages.createDiagnosticCollection('tptpPrettyPrint');
-  context.subscriptions.push(prettyPrintDiagnostics);
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeTextDocument(event => {
-      prettyPrintDiagnostics.delete(event.document.uri);
-    })
-  );
-
   async function fetchList(url: string, inputType: string = 'radio') {
     const response = await fetch(url, {
       "body": null,
@@ -324,9 +316,7 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(prepareProblem);
 
   //@ FORMAT A PROBLEM BY RUNNING JJPARSER LOCALLY, USING REMOTE SYSTEMB4TPTP AS FALLBACK
-  context.subscriptions.push(
-    registerPrettyPrintCommand(context, prettyPrintDiagnostics)
-  );
+  context.subscriptions.push(registerPrettyPrintCommand(context));
 
   //@ RUN A THEOREM THROUGH SYSTEMONTPTP                                              
   const proveProblem = vscode.commands.registerCommand('tptp.proveProblem', async (uri: vscode.Uri) => {

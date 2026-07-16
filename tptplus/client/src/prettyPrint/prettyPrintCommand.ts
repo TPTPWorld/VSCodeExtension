@@ -8,6 +8,10 @@ import {
 } from './jjParserDiagnostics';
 import { formatTptpLocally } from './localPrettyPrint';
 import { isDuplicateFormulaNameError } from './prettyPrintErrors';
+import {
+  mightNeedPrettyPrinting,
+  setMightNeedPrettyPrinting
+} from './prettyPrintState';
 import { createSystemB4TptpForm } from '../systemTptpForms';
 import {
   extractSystemB4TptpOutput,
@@ -22,17 +26,17 @@ async function applyPrettyPrintResult(
   originalVersion: number,
   originalText: string,
   prettyPrintResult: string
-): Promise<void> {
+): Promise<boolean> {
   if (document.version !== originalVersion) {
     vscode.window.showWarningMessage(
       'TPTP file changed while formatting. Please run the pretty-printer again.'
     );
-    return;
+    return false;
   }
 
   if (originalText === prettyPrintResult) {
     vscode.window.showInformationMessage('TPTP file is already formatted.');
-    return;
+    return true;
   }
 
   // use WorkspaceEdit to edit any URI's document, even if it's invisible
@@ -47,8 +51,10 @@ async function applyPrettyPrintResult(
   const isEditApplied = await vscode.workspace.applyEdit(edit);
   if (!isEditApplied) {
     vscode.window.showErrorMessage('Pretty-printer succeeded, but VS Code could not apply the formatted output.');
+    return false;
   } else {
     vscode.window.showInformationMessage('TPTP file formatted successfully.');
+    return true;
   }
 }
 
@@ -91,12 +97,12 @@ async function formatTptpRemotely(sourceText: string): Promise<string> {
 // https://code.visualstudio.com/blogs/2016/11/15/formatters-best-practices
 /** Registers the pretty-print command with local formatting and a remote fallback. */
 export function registerPrettyPrintCommand(
-  context: vscode.ExtensionContext,
-  prettyPrintDiagnostics: vscode.DiagnosticCollection
+  context: vscode.ExtensionContext
 ): vscode.Disposable {
+  const prettyPrintDiagnostics = vscode.languages.createDiagnosticCollection('tptpPrettyPrint');
   let prettyPrintRunning = false;
 
-  return vscode.commands.registerCommand('tptp.prettyPrint', async (uri: vscode.Uri) => {
+  const commandDisposable = vscode.commands.registerCommand('tptp.prettyPrint', async (uri: vscode.Uri) => {
     if (prettyPrintRunning) {
       vscode.window.showInformationMessage('The TPTP pretty-printer is already running.');
       return;
@@ -115,10 +121,17 @@ export function registerPrettyPrintCommand(
     try {
       await vscode.commands.executeCommand('setContext', PRETTY_PRINT_RUNNING_CONTEXT_KEY, true);
 
+      const document = await vscode.workspace.openTextDocument(uri);
+      if (!mightNeedPrettyPrinting(document)) {
+        vscode.window.showInformationMessage(
+          'The file has not changed since the last pretty-printer run.'
+        );
+        return;
+      }
+
       // Clear stale parser diagnostics before each new pretty-printer run.
       prettyPrintDiagnostics.delete(uri);
 
-      const document = await vscode.workspace.openTextDocument(uri);
       const sourceVersion = document.version;
       const sourceText = document.getText();
 
@@ -126,18 +139,32 @@ export function registerPrettyPrintCommand(
       const localResult = await formatTptpLocally(context, sourceText);
 
       if (localResult.kind === 'success') {
-        await applyPrettyPrintResult(document, sourceVersion, sourceText, localResult.output);
+        const documentIsFormatted = await applyPrettyPrintResult(
+          document,
+          sourceVersion,
+          sourceText,
+          localResult.output
+        );
+        if (documentIsFormatted) {
+          setMightNeedPrettyPrinting(document, false);
+        }
         return;
       }
 
       if (localResult.kind === 'parser-error') {
         if (isDuplicateFormulaNameError(localResult.message)) {
+          if (document.version === sourceVersion) {
+            setMightNeedPrettyPrinting(document, false);
+          }
           vscode.window.showErrorMessage(`Failed to format TPTP file: ${localResult.message}`);
           return;
         }
 
         const errorLocation = getJJParserErrorLocation(document, localResult.message);
         if (errorLocation !== undefined) {
+          if (document.version === sourceVersion) {
+            setMightNeedPrettyPrinting(document, false);
+          }
           await reportPrettyPrintError(
             prettyPrintDiagnostics,
             document,
@@ -179,11 +206,30 @@ export function registerPrettyPrintCommand(
           `the SystemB4TPTP remote pretty-printer reported ${lastLine}`
         );
       } else {
-        await applyPrettyPrintResult(document, sourceVersion, sourceText, remoteResult);
+        const documentIsFormatted = await applyPrettyPrintResult(
+          document,
+          sourceVersion,
+          sourceText,
+          remoteResult
+        );
+        if (documentIsFormatted) {
+          setMightNeedPrettyPrinting(document, false);
+        }
       }
     } finally {
       prettyPrintRunning = false;
       await vscode.commands.executeCommand('setContext', PRETTY_PRINT_RUNNING_CONTEXT_KEY, false);
     }
   });
+
+  const changeDisposable = vscode.workspace.onDidChangeTextDocument(event => {
+    prettyPrintDiagnostics.delete(event.document.uri);
+    setMightNeedPrettyPrinting(event.document, true);
+  });
+
+  return vscode.Disposable.from(
+    prettyPrintDiagnostics,
+    commandDisposable,
+    changeDisposable
+  );
 }
