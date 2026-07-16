@@ -57,6 +57,7 @@
       {
         "command": "tptp.prettyPrint",
         "title": "TPTP: Pretty-Print TPTP File",
+        "enablement": "!tptp.prettyPrintRunning",
         "icon": {
           "light": "./images/icons/PrettyPrint.png",
           "dark": "./images/icons/PrettyPrint.png"
