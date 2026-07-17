@@ -1,3 +1,4 @@
+import { errorMessage } from '../errorMessage';
 import {
   parseJJParserError,
   type ParsedJJParserError
@@ -13,10 +14,6 @@ export interface PrettyPrintWorkflowDependencies {
   formatLocally: PrettyPrintFormatterFunction;
   formatRemotely: PrettyPrintFormatterFunction;
   onRemoteFallback?(localFailureMessage: string): void | Promise<void>;
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 /** Ensures an adapter exception is represented by the same result type as other failures. */

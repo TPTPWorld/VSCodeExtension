@@ -11,6 +11,7 @@ import {
   TransportKind
 } from 'vscode-languageclient/node';
 
+import { errorMessage } from './errorMessage';
 import { createSystemB4TptpForm } from './systemTptpForms';
 import { registerPrettyPrintCommand } from './prettyPrint/command';
 
@@ -979,12 +980,7 @@ export function activate(context: ExtensionContext) {
           });
 
         } catch (error: unknown) {
-          if (error instanceof Error) {
-            vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
-          } else {
-            // Handle cases where something else was thrown (like a string or null)
-            vscode.window.showErrorMessage(`Error submitting to TPTP: ${String(error)}`);
-          }
+          vscode.window.showErrorMessage(`Error submitting to TPTP: ${errorMessage(error)}`);
         }
       }
     });
@@ -1601,12 +1597,7 @@ export function activate(context: ExtensionContext) {
           });
 
         } catch (error: unknown) {
-          if (error instanceof Error) {
-            vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
-          } else {
-            // Handle cases where something else was thrown (like a string or null)
-            vscode.window.showErrorMessage(`Error submitting to TPTP: ${String(error)}`);
-          }
+          vscode.window.showErrorMessage(`Error submitting to TPTP: ${errorMessage(error)}`);
         }
       }
     });
@@ -1939,12 +1930,7 @@ export function activate(context: ExtensionContext) {
           });
 
         } catch (error: unknown) {
-          if (error instanceof Error) {
-            vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
-          } else {
-            // Handle cases where something else was thrown (like a string or null)
-            vscode.window.showErrorMessage(`Error submitting to TPTP: ${String(error)}`);
-          }
+          vscode.window.showErrorMessage(`Error submitting to TPTP: ${errorMessage(error)}`);
         }
       }
     })
@@ -2280,12 +2266,7 @@ export function activate(context: ExtensionContext) {
           });
 
         } catch (error: unknown) {
-          if (error instanceof Error) {
-            vscode.window.showErrorMessage(`Error submitting to TPTP: ${error.message}`);
-          } else {
-            // Handle cases where something else was thrown (like a string or null)
-            vscode.window.showErrorMessage(`Error submitting to TPTP: ${String(error)}`);
-          }
+          vscode.window.showErrorMessage(`Error submitting to TPTP: ${errorMessage(error)}`);
         }
       }
     })
