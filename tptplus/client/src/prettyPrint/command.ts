@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 
+import { errorMessage } from '../errorMessage';
 import {
   createJJParserDiagnosticLocation,
   revealJJParserErrorLocation,
@@ -185,8 +186,7 @@ function createPrettyPrintCommandHandler(
       await setPrettyPrintRunningContext(true);
       await executePrettyPrint(context, diagnostics, targetUri);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      vscode.window.showErrorMessage(`Failed to format TPTP file: ${message}`);
+      vscode.window.showErrorMessage(`Failed to format TPTP file: ${errorMessage(error)}`);
     } finally {
       await setPrettyPrintRunningContext(false);
       prettyPrintRunning = false;

@@ -1,3 +1,4 @@
+import { errorMessage } from '../errorMessage';
 import {
   extractSystemB4TptpOutput,
   lastNonemptyLine
@@ -6,10 +7,6 @@ import { createSystemB4TptpForm } from '../systemTptpForms';
 import type { PrettyPrintFormatterResult } from './types';
 
 const SYSTEM_ON_TPTP_URL = 'https://tptp.org/cgi-bin/SystemOnTPTPFormReply';
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
 
 /** Formats TPTP source using the SystemB4TPTP remote pretty-printer. */
 export async function formatTptpRemotely(
