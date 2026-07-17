@@ -1,4 +1,4 @@
-import type { PrettyPrintSourceErrorLocation } from './prettyPrintTypes';
+import type { PrettyPrintSourceErrorLocation } from './types';
 
 const DUPLICATE_FORMULA_NAME_ERROR_PREFIX =
   'ERROR: Duplicate annotated formula name';

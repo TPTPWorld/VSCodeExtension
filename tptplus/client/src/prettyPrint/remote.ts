@@ -3,7 +3,7 @@ import {
   lastNonemptyLine
 } from '../systemB4TptpOutput';
 import { createSystemB4TptpForm } from '../systemTptpForms';
-import type { PrettyPrintFormatterResult } from './prettyPrintTypes';
+import type { PrettyPrintFormatterResult } from './types';
 
 const SYSTEM_ON_TPTP_URL = 'https://tptp.org/cgi-bin/SystemOnTPTPFormReply';
 

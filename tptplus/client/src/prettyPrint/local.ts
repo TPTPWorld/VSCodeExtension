@@ -1,9 +1,9 @@
 import { spawn } from 'child_process';
 import * as path from 'path';
 import type * as vscode from 'vscode';
-import type { PrettyPrintFormatterResult } from './prettyPrintTypes';
+import type { PrettyPrintFormatterResult } from './types';
 
-const RUNNER_PATH = path.join('client', 'out', 'prettyPrint', 'localPrettyPrintProcess.js');
+const RUNNER_PATH = path.join('client', 'out', 'prettyPrint', 'localProcess.js');
 const LOCAL_PRETTY_PRINT_TIMEOUT_MS = 10000;  // TODO: make this configurable
 
 function readParserError(stderr: string): string | undefined {

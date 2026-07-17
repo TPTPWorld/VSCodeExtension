@@ -7,7 +7,7 @@ import type {
   PrettyPrintFormatterFunction,
   PrettyPrintFormatterResult,
   PrettyPrintOutcome
-} from './prettyPrintTypes';
+} from './types';
 
 export interface PrettyPrintWorkflowDependencies {
   formatLocally: PrettyPrintFormatterFunction;

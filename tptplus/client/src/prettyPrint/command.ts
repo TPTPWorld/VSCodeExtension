@@ -4,15 +4,15 @@ import {
   createJJParserDiagnosticLocation,
   revealJJParserErrorLocation,
   setJJParserErrorDiagnostic
-} from './prettyPrintDiagnostics';
-import { formatTptpLocally } from './localPrettyPrint';
-import { formatTptpWithFallback } from './prettyPrintWorkflow';
-import { formatTptpRemotely } from './remotePrettyPrint';
+} from './diagnostics';
+import { formatTptpLocally } from './local';
+import { formatTptpWithFallback } from './workflow';
+import { formatTptpRemotely } from './remote';
 import {
   markPrettyPrintVersionHandled,
   wasPrettyPrintVersionHandled
-} from './prettyPrintState';
-import type { PrettyPrintOutcome } from './prettyPrintTypes';
+} from './state';
+import type { PrettyPrintOutcome } from './types';
 
 const PRETTY_PRINT_COMMAND = 'tptp.prettyPrint';
 const PRETTY_PRINT_RUNNING_CONTEXT_KEY = 'tptp.prettyPrintRunning';
