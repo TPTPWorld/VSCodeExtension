@@ -1,37 +1,27 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
+import type { PrettyPrintSourceErrorLocation } from './prettyPrintTypes';
 
-export interface JJParserErrorLocation {
+export interface PrettyPrintDiagnosticLocation {
   position: vscode.Position;
   range: vscode.Range;
   message: string;
   reportedText?: string;
 }
 
-/**
- * Takes a JJParser error message and turns it into a VS Code location.
- * @param message The expected message shape is like
- *                'SyntaxError: Line 15 Char 6 Token "{" continuing with ...' or
- *                'SyntaxError: Line 11 Char 42 Character "[" continuing with ...'
- * @returns VS Code location or undefined
- */
-export function getJJParserErrorLocation(document: vscode.TextDocument, message: string):
-  JJParserErrorLocation | undefined
-{
-  const match = message.match(/\bLine\s+(\d+)\s+Char\s+(\d+)(?:\s+(?:Token|Character)\s+"([\s\S]*?)"\s+continuing\b)?/);
-  if (!match) {
+/** Converts a parsed source location into a document-clamped VS Code location. */
+export function createJJParserDiagnosticLocation(
+  document: vscode.TextDocument,
+  message: string,
+  sourceLocation: PrettyPrintSourceErrorLocation | undefined
+): PrettyPrintDiagnosticLocation | undefined {
+  if (!sourceLocation) {
     return undefined;
   }
 
-  const reportedLine = Number.parseInt(match[1], 10);
-  const reportedCharacter = Number.parseInt(match[2], 10);
-  if (Number.isNaN(reportedLine) || Number.isNaN(reportedCharacter)) {
-    return undefined;
-  }
-
-  const lineIndex = Math.max(0, Math.min(reportedLine - 1, document.lineCount - 1));
+  const lineIndex = Math.min(sourceLocation.line, document.lineCount - 1);
   const lineText = document.lineAt(lineIndex).text;
-  let characterIndex = Math.max(0, Math.min(reportedCharacter - 1, lineText.length));
-  const reportedText = match[3];
+  let characterIndex = Math.min(sourceLocation.character, lineText.length);
+  const reportedText = sourceLocation.reportedText;
 
   // If the error message reports a token or character, try to move cursor to its beginning.
   if (reportedText) {
@@ -50,8 +40,8 @@ export function getJJParserErrorLocation(document: vscode.TextDocument, message:
   return {
     position: startPosition,
     range: new vscode.Range(startPosition, endPosition),
-    message: message,
-    reportedText: reportedText
+    message,
+    reportedText
   };
 }
 
@@ -63,8 +53,8 @@ export function getJJParserErrorLocation(document: vscode.TextDocument, message:
 export function setJJParserErrorDiagnostic(
   diagnostics: vscode.DiagnosticCollection,
   document: vscode.TextDocument,
-  errorLocation: JJParserErrorLocation | undefined
-) {
+  errorLocation: PrettyPrintDiagnosticLocation | undefined
+): void {
   if (!errorLocation?.reportedText) {
     return;
   }
@@ -85,7 +75,7 @@ export function setJJParserErrorDiagnostic(
  */
 export async function revealJJParserErrorLocation(
   document: vscode.TextDocument,
-  errorLocation: JJParserErrorLocation | undefined
+  errorLocation: PrettyPrintDiagnosticLocation | undefined
 ): Promise<void>
 {
   const position = errorLocation?.position;
