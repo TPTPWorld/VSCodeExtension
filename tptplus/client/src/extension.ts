@@ -12,7 +12,7 @@ import {
 } from 'vscode-languageclient/node';
 
 import { createSystemB4TptpForm } from './systemTptpForms';
-import { registerPrettyPrintCommand } from './prettyPrint/prettyPrintCommand';
+import { registerPrettyPrintCommand } from './prettyPrint/command';
 
 let client: LanguageClient;
 

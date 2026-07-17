@@ -1,3 +1,8 @@
+/**
+ * Tracking per-document pretty-print state so unchanged document versions can
+ * skip redundant pretty-print runs.
+ */
+
 import type * as vscode from 'vscode';
 
 const handledVersionByDocument = new WeakMap<vscode.TextDocument, number>();

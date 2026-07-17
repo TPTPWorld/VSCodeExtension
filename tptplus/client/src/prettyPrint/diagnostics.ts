@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { PrettyPrintSourceErrorLocation } from './prettyPrintTypes';
+import type { PrettyPrintSourceErrorLocation } from './types';
 
 export interface PrettyPrintDiagnosticLocation {
   position: vscode.Position;
