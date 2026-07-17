@@ -1,14 +1,10 @@
 import { spawn } from 'child_process';
 import * as path from 'path';
-import * as vscode from 'vscode';
+import type * as vscode from 'vscode';
+import type { PrettyPrintFormatterResult } from './prettyPrintTypes';
 
 const RUNNER_PATH = path.join('client', 'out', 'prettyPrint', 'localPrettyPrintProcess.js');
 const LOCAL_PRETTY_PRINT_TIMEOUT_MS = 10000;  // TODO: make this configurable
-
-export type LocalPrettyPrintResult =
-  | { kind: 'success'; output: string }
-  | { kind: 'parser-error'; message: string }
-  | { kind: 'unknown-error' };
 
 function readParserError(stderr: string): string | undefined {
   for (const line of stderr.trim().split(/\r?\n/).reverse()) {
@@ -32,11 +28,11 @@ function readParserError(stderr: string): string | undefined {
 export async function formatTptpLocally(
   context: vscode.ExtensionContext,
   input: string
-): Promise<LocalPrettyPrintResult> {
+): Promise<PrettyPrintFormatterResult> {
 
   // // debugging: uncomment this to simulate a failure of the local JJParser
-  // return { kind: 'parser-error', message: '(This is an error message for debugging that does not point to any specific location in source file.)' };
-  // return { kind: 'unknown-error' };
+  // return { kind: 'source-error', message: '(This is an error message for debugging that does not point to any specific location in source file.)' };
+  // return { kind: 'failure', message: 'unknown error' };
 
   if (!input.trim()) { // a whitespace-only TPTP file should become empty
     return { kind: 'success', output: '' };
@@ -54,7 +50,7 @@ export async function formatTptpLocally(
       stdio: ['pipe', 'pipe', 'pipe'],  // stdin, stdout, stderr
     });
 
-    function finish(result: LocalPrettyPrintResult): void {
+    function finish(result: PrettyPrintFormatterResult): void {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
@@ -64,20 +60,20 @@ export async function formatTptpLocally(
     const timeout = setTimeout(() => {
       child.kill();
       finish({
-        kind: 'parser-error',
+        kind: 'failure',
         message: `timeout after ${LOCAL_PRETTY_PRINT_TIMEOUT_MS} ms`
       });
     }, LOCAL_PRETTY_PRINT_TIMEOUT_MS);
 
-    child.on('error', () => finish({ kind: 'unknown-error' }));
+    child.on('error', error => finish({ kind: 'failure', message: error.message }));
     child.on('close', exitCode => {
       if (exitCode === 0) {
         finish({ kind: 'success', output: stdout });
       } else {
         const parserError = readParserError(stderr);
         finish(parserError ?
-          { kind: 'parser-error', message: parserError } :
-          { kind: 'unknown-error' }
+          { kind: 'source-error', message: parserError } :
+          { kind: 'failure', message: 'unknown error' }
         );
       }
     });

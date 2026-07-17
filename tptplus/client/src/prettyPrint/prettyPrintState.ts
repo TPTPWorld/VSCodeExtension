@@ -1,16 +1,13 @@
 import type * as vscode from 'vscode';
 
-const mightNeedPrettyPrintingByDocument = new WeakMap<vscode.TextDocument, boolean>();
+const handledVersionByDocument = new WeakMap<vscode.TextDocument, number>();
 
-/** Whether the current contents of a document might need to be pretty-printed. */
-export function mightNeedPrettyPrinting(document: vscode.TextDocument): boolean {
-  return mightNeedPrettyPrintingByDocument.get(document) ?? true;
+/** Whether the current document version already produced a terminal outcome. */
+export function wasPrettyPrintVersionHandled(document: vscode.TextDocument): boolean {
+  return handledVersionByDocument.get(document) === document.version;
 }
 
-/** Records whether the current contents of a document might need to be pretty-printed. */
-export function setMightNeedPrettyPrinting(
-  document: vscode.TextDocument,
-  mightNeedPrettyPrinting: boolean
-): void {
-  mightNeedPrettyPrintingByDocument.set(document, mightNeedPrettyPrinting);
+/** Records the current document version as having produced a terminal outcome. */
+export function markPrettyPrintVersionHandled(document: vscode.TextDocument): void {
+  handledVersionByDocument.set(document, document.version);
 }
