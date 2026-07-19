@@ -10,8 +10,8 @@ import { formatTptpLocally } from './local';
 import { formatTptpWithFallback } from './workflow';
 import { formatTptpRemotely } from './remote';
 import {
-  markPrettyPrintVersionHandled,
-  wasPrettyPrintVersionHandled
+  isPrettyPrintVersionKnownFormatted,
+  markPrettyPrintVersionFormatted
 } from './state';
 import type { PrettyPrintOutcome } from './types';
 
@@ -95,7 +95,6 @@ async function presentPrettyPrintOutcome(
   }
 
   if (outcome.kind === 'source-error') {
-    markPrettyPrintVersionHandled(document);
     await reportSourceError(diagnostics, document, outcome);
     return;
   }
@@ -111,11 +110,11 @@ async function presentPrettyPrintOutcome(
   const applyResult = await applyPrettyPrintResult(document, snapshot, outcome.output);
   switch (applyResult) {
     case 'applied':
-      markPrettyPrintVersionHandled(document);
+      markPrettyPrintVersionFormatted(document);
       vscode.window.showInformationMessage('TPTP file formatted successfully.');
       return;
     case 'unchanged':
-      markPrettyPrintVersionHandled(document);
+      markPrettyPrintVersionFormatted(document);
       vscode.window.showInformationMessage('TPTP file is already formatted.');
       return;
     case 'stale':
@@ -136,9 +135,9 @@ async function executePrettyPrint(
   uri: vscode.Uri
 ): Promise<void> {
   const document = await vscode.workspace.openTextDocument(uri);
-  if (wasPrettyPrintVersionHandled(document)) {
+  if (isPrettyPrintVersionKnownFormatted(document)) {
     vscode.window.showInformationMessage(
-      'The file has not changed since the last pretty-printer run.'
+      'The file has not changed since it was last successfully formatted.'
     );
     return;
   }
