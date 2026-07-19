@@ -2367,24 +2367,6 @@ export function activate(context: ExtensionContext) {
 
   context.subscriptions.push(importSolution);
 
-  //@                                                                                  
-
-
-  //@ FORMAT DOCUMENT
-  let disposable = vscode.commands.registerCommand(
-    "tptp.formatDocument",
-    () => {
-      const editor = vscode.window.activeTextEditor;
-      if (editor && editor.document.languageId === "tptp") {
-        vscode.commands.executeCommand("editor.action.formatDocument");
-      }
-    }
-  );
-
-  context.subscriptions.push(disposable);
-
-  //@                                                                                  
-
   // Server is implemented in TypeScript and runs in a separate process
   const serverModule = context.asAbsolutePath(
     path.join('server', 'out', 'server.js')
