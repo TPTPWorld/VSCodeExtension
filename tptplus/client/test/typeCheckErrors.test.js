@@ -1,7 +1,27 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { getLeoIIITypeErrors } = require('../out/typeCheck/errors');
+const {
+  formatTypeCheckStatusMessage,
+  getLeoIIITypeErrors
+} = require('../out/typeCheck/errors');
+
+test('formatTypeCheckStatusMessage removes the temporary file from syntax errors', () => {
+  const message =
+    "Parse error in file '/tmp/9wGGhEopjp/SOT_zt320r' in line 14:5. Expected COMMA but read LOWERWORD 'f'";
+
+  assert.equal(
+    formatTypeCheckStatusMessage('SyntaxError', message),
+    "Parse error in line 14:5. Expected COMMA but read LOWERWORD 'f'"
+  );
+});
+
+test('formatTypeCheckStatusMessage discards the generic type-error message', () => {
+  assert.equal(
+    formatTypeCheckStatusMessage('TypeError', 'Problem is not well-typed'),
+    ''
+  );
+});
 
 test('getLeoIIITypeErrors extracts every reported formula and location', () => {
   const output = [

@@ -14,6 +14,28 @@ export interface LeoIIITypeError {
   message: string;
 }
 
+/** Formats an SZS status message for display in a type-check toaster. */
+export function formatTypeCheckStatusMessage(
+  status: string | undefined,
+  message: string | undefined
+): string | undefined {
+  if (status === 'TypeError') {
+    // Discard the generic "Problem is not well-typed" message. The detailed
+    // ill-typed formula messages from the SZS output are displayed instead.
+    return '';
+  }
+
+  if (status === 'SyntaxError') {
+    // Discard temporary file name
+    return message?.replace(
+      /^Parse error in file '[^\r\n]*' in line (?=\d+:\d+)/,
+      'Parse error in line '
+    );
+  }
+
+  return message;
+}
+
 /** Extracts every source-located type error reported by LEO-III-STC. */
 export function getLeoIIITypeErrors(output: string): LeoIIITypeError[] {
   const typeErrors: LeoIIITypeError[] = [];

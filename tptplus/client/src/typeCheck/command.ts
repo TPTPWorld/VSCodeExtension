@@ -9,6 +9,7 @@ import {
 } from '../systemB4TptpOutput';
 import {
   createLeoIIITypeErrorDiagnostics,
+  formatTypeCheckStatusMessage,
   getLeoIIITypeErrors
 } from './errors';
 
@@ -74,7 +75,10 @@ export function registerTypeCheckCommand(): vscode.Disposable {
 
       const output = await response.text();
       const status = getSzsStatus(output);
-      const statusMessage = getSzsStatusMessage(output);
+      const statusMessage = formatTypeCheckStatusMessage(
+        status,
+        getSzsStatusMessage(output)
+      );
       const szsOutput = getSzsOutput(output);
       const outputSuffix = [statusMessage, szsOutput]
         .filter((message): message is string => Boolean(message)) // discard '' or undefined
@@ -90,7 +94,7 @@ export function registerTypeCheckCommand(): vscode.Disposable {
             createLeoIIITypeErrorDiagnostics(document, typeErrors)
           );
           vscode.window.showErrorMessage(
-            `LEO-III-STC found type error(s).${szsOutput ? `\n${szsOutput}` : ''}`
+            `LEO-III-STC found type error(s).${outputSuffix}`
           );
         } else {
           vscode.window.showErrorMessage(
