@@ -16,6 +16,8 @@ import {
 const SYSTEM_ON_TPTP_URL = 'https://tptp.org/cgi-bin/SystemOnTPTPFormReply';
 const LEO_III_STC = 'Leo-III-STC---'; // SystemB4TPTP will automatically run the latest version of LEO-III-STC it has available
 const TYPE_CHECK_RUNNING_CONTEXT_KEY = 'tptp.typeCheckRunning';
+const TYPE_CHECK_TIMEOUT_SEC = 60; // TODO: make this configurable
+const TYPE_CHECK_REQUEST_TIMEOUT_MS = 75000; // TODO: make this configurable
 
 function createLeoIIITypeCheckForm(document: vscode.TextDocument): FormData {
   const form = new FormData();
@@ -27,7 +29,7 @@ function createLeoIIITypeCheckForm(document: vscode.TextDocument): FormData {
   form.append('X2TPTP', '');
   form.append('ProblemSource', 'UPLOAD');
   form.append(`System___${LEO_III_STC}`, LEO_III_STC);
-  form.append(`TimeLimit___${LEO_III_STC}`, '60');
+  form.append(`TimeLimit___${LEO_III_STC}`, String(TYPE_CHECK_TIMEOUT_SEC));
   form.append(
     'UPLOADProblem',
     new Blob([document.getText()], { type: 'text/plain' }),
@@ -35,6 +37,71 @@ function createLeoIIITypeCheckForm(document: vscode.TextDocument): FormData {
   );
 
   return form;
+}
+
+/**
+ * Runs the complete remote request with visible progress, cancellation, and a timeout.
+ *
+ * @returns The response body for a successful request, or `undefined` when the user
+ * cancels the operation. User cancellation is therefore an expected outcome rather
+ * than an error.
+ * @throws An error when the request times out, returns a non-successful HTTP status,
+ * encounters a network failure, or fails while reading the response body.
+ */
+async function requestLeoIIITypeCheck(
+  document: vscode.TextDocument
+): Promise<string | undefined> {
+  return vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: 'Type-checking with LEO-III-STC',
+      cancellable: true
+    },
+    async (progress, token) => {
+      const controller = new AbortController();
+      let timedOut = false;
+
+      progress.report({ message: 'Waiting for tptp.org...' });
+      const cancellation = token.onCancellationRequested(() => {
+        controller.abort();
+      });
+      const timeout = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, TYPE_CHECK_REQUEST_TIMEOUT_MS);
+
+      try {
+        const response = await fetch(SYSTEM_ON_TPTP_URL, {
+          method: 'POST',
+          body: createLeoIIITypeCheckForm(document),
+          signal: controller.signal
+        });
+
+        if (token.isCancellationRequested) {
+          return undefined;
+        }
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText || 'request failed'}`);
+        }
+
+        const output = await response.text();
+        return token.isCancellationRequested ? undefined : output;
+      } catch (error: unknown) {
+        if (token.isCancellationRequested) {
+          return undefined;
+        }
+        if (timedOut) {
+          throw new Error(
+            `LEO-III-STC type check timed out after ${TYPE_CHECK_REQUEST_TIMEOUT_MS / 1000} seconds.`
+          );
+        }
+        throw error;
+      } finally {
+        clearTimeout(timeout);
+        cancellation.dispose();
+      }
+    }
+  );
 }
 
 /** Registers the command that asks LEO-III-STC on SystemB4TPTP to type-check a TPTP document. */
@@ -64,16 +131,11 @@ export function registerTypeCheckCommand(): vscode.Disposable {
       const document = await vscode.workspace.openTextDocument(uri);
       const checkedDocumentVersion = document.version;
       diagnostics.delete(document.uri);
-      const response = await fetch(SYSTEM_ON_TPTP_URL, {
-        method: 'POST',
-        body: createLeoIIITypeCheckForm(document)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText || 'request failed'}`);
+      const output = await requestLeoIIITypeCheck(document);
+      if (output === undefined) {
+        vscode.window.showInformationMessage('LEO-III-STC type check cancelled.');
+        return;
       }
-
-      const output = await response.text();
       if (document.version !== checkedDocumentVersion) {
         vscode.window.showErrorMessage(
           'TPTP file changed while type-checking. Please run the type-checker again.'
