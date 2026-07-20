@@ -14,6 +14,7 @@ import {
 import { errorMessage } from './errorMessage';
 import { createSystemB4TptpForm } from './systemTptpForms';
 import { registerPrettyPrintCommand } from './prettyPrint/command';
+import { registerTypeCheckCommand } from './typeCheck/command';
 
 let client: LanguageClient;
 
@@ -318,6 +319,9 @@ export function activate(context: ExtensionContext) {
 
   //@ FORMAT A PROBLEM BY RUNNING JJPARSER LOCALLY, USING REMOTE SYSTEMB4TPTP AS FALLBACK
   context.subscriptions.push(registerPrettyPrintCommand(context));
+
+  //@ CHECK TYPES WITH LEO-III-STC THROUGH SYSTEMONTPTP
+  context.subscriptions.push(registerTypeCheckCommand());
 
   //@ RUN A THEOREM THROUGH SYSTEMONTPTP                                              
   const proveProblem = vscode.commands.registerCommand('tptp.proveProblem', async (uri: vscode.Uri) => {
