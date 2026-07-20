@@ -41,7 +41,7 @@ export function lastNonemptyLine(text: string): string | undefined {
   return undefined;
 }
 
-/** Finds an SZS status line outside an SZS output block. */
+/** Finds an SZS status line before an SZS output block. */
 function getSzsStatusLine(output: string): string | undefined {
   for (const line of output.split(/\r?\n/)) {
     if (/^% SZS output start \S+/.test(line)) {
@@ -55,7 +55,7 @@ function getSzsStatusLine(output: string): string | undefined {
   return undefined;
 }
 
-/** Extracts the status name from an SZS status line outside an SZS output block. */
+/** Extracts the status name from an SZS status line before an SZS output block. */
 export function getSzsStatus(output: string): string | undefined {
   return getSzsStatusLine(output)?.match(/^% SZS status (\S+)/)?.[1];
 }

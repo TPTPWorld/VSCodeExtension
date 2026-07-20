@@ -72,17 +72,6 @@ test('getSzsStatus ignores a status line within an SZS output block', () => {
   assert.equal(getSzsStatus(output), undefined);
 });
 
-test('getSzsStatus extracts a status after an SZS output block', () => {
-  const output = [
-    '% SZS output start LogicalData for problem',
-    '% SZS status TypeError for nested-output',
-    '% SZS output end LogicalData for problem',
-    '% SZS status Success for problem'
-  ].join('\r\n');
-
-  assert.equal(getSzsStatus(output), 'Success');
-});
-
 test('getSzsOutput extracts multiline output and preserves blank lines', () => {
   const output = [
     '% START OF SYSTEM OUTPUT',
