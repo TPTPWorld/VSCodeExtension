@@ -74,6 +74,13 @@ export function registerTypeCheckCommand(): vscode.Disposable {
       }
 
       const output = await response.text();
+      if (document.version !== checkedDocumentVersion) {
+        vscode.window.showErrorMessage(
+          'TPTP file changed while type-checking. Please run the type-checker again.'
+        );
+        return;
+      }
+
       const status = getSzsStatus(output);
       const statusMessage = formatTypeCheckStatusMessage(
         status,
@@ -87,20 +94,14 @@ export function registerTypeCheckCommand(): vscode.Disposable {
       if (status === 'Success') {
         vscode.window.showInformationMessage(`LEO-III-STC type check succeeded.`);
       } else if (status === 'TypeError') {
-        if (document.version === checkedDocumentVersion) {
-          const typeErrors = getLeoIIITypeErrors(szsOutput ?? output);
-          diagnostics.set(
-            document.uri,
-            createLeoIIITypeErrorDiagnostics(document, typeErrors)
-          );
-          vscode.window.showErrorMessage(
-            `LEO-III-STC found type error(s).${outputSuffix}`
-          );
-        } else {
-          vscode.window.showErrorMessage(
-            `TPTP file changed while type-checking. Please run the type-checker again.`
-          );
-        }
+        const typeErrors = getLeoIIITypeErrors(szsOutput ?? output);
+        diagnostics.set(
+          document.uri,
+          createLeoIIITypeErrorDiagnostics(document, typeErrors)
+        );
+        vscode.window.showErrorMessage(
+          `LEO-III-STC found type error(s).${outputSuffix}`
+        );
       } else if (status) {
         vscode.window.showErrorMessage(`LEO-III-STC reported ${status}.${outputSuffix}`);
       } else {
