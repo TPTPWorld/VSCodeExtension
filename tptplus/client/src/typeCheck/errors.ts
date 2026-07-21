@@ -1,10 +1,3 @@
-import type * as vscode from 'vscode';
-
-const TYPE_CHECK_DIAGNOSTIC_SOURCE = 'LEO-III-STC type checker';
-// DiagnosticSeverity.Warning is 1 in the VS Code API. Keeping this module's
-// VS Code dependency type-only also makes the error parser independently testable.
-const WARNING_DIAGNOSTIC_SEVERITY: vscode.DiagnosticSeverity = 1;
-
 export interface LeoIIITypeError {
   formulaName: string;
   /** One-based source line reported by LEO-III-STC. */
@@ -51,31 +44,4 @@ export function getLeoIIITypeErrors(output: string): LeoIIITypeError[] {
   }
 
   return typeErrors;
-}
-
-/** Creates warning diagnostics from each valid LEO-III-STC source location. */
-export function createLeoIIITypeErrorDiagnostics(
-  document: vscode.TextDocument,
-  typeErrors: LeoIIITypeError[]
-): vscode.Diagnostic[] {
-  const diagnostics: vscode.Diagnostic[] = [];
-
-  for (const typeError of typeErrors) {
-    const lineIndex = typeError.line - 1;
-    if (lineIndex < 0 || lineIndex >= document.lineCount) {
-      continue;
-    }
-
-    const line = document.lineAt(lineIndex);
-    const characterIndex = Math.min(typeError.character - 1, line.text.length);
-    const startPosition = line.range.start.with(undefined, characterIndex);
-    diagnostics.push({
-      range: line.range.with(startPosition, line.range.end),
-      message: typeError.message,
-      severity: WARNING_DIAGNOSTIC_SEVERITY,
-      source: TYPE_CHECK_DIAGNOSTIC_SOURCE
-    });
-  }
-
-  return diagnostics;
 }

@@ -8,10 +8,13 @@ import {
   getSzsStatusMessage
 } from '../systemB4TptpOutput';
 import {
-  createLeoIIITypeErrorDiagnostics,
   formatTypeCheckStatusMessage,
   getLeoIIITypeErrors
 } from './errors';
+import {
+  createLeoIIITypeErrorDiagnostics,
+  revealFirstTypeError
+} from './diagnostics';
 
 const SYSTEM_ON_TPTP_URL = 'https://tptp.org/cgi-bin/SystemOnTPTPFormReply';
 const LEO_III_STC = 'Leo-III-STC---'; // SystemB4TPTP will automatically run the latest version of LEO-III-STC it has available
@@ -157,10 +160,9 @@ export function registerTypeCheckCommand(): vscode.Disposable {
         vscode.window.showInformationMessage(`LEO-III-STC type check succeeded.`);
       } else if (status === 'TypeError') {
         const typeErrors = getLeoIIITypeErrors(szsOutput ?? output);
-        diagnostics.set(
-          document.uri,
-          createLeoIIITypeErrorDiagnostics(document, typeErrors)
-        );
+        const typeErrorDiagnostics = createLeoIIITypeErrorDiagnostics(document, typeErrors);
+        diagnostics.set(document.uri, typeErrorDiagnostics);
+        await revealFirstTypeError(document, typeErrorDiagnostics);
         vscode.window.showErrorMessage(
           `LEO-III-STC found type error(s).${outputSuffix}`
         );
