@@ -1,6 +1,6 @@
 import { errorMessage } from '../errorMessage';
 import {
-  extractSystemB4TptpOutput,
+  extractSystemB4TptpHtmlOutput,
   lastNonemptyLine
 } from '../systemB4TptpOutput';
 import { createSystemB4TptpForm } from '../systemTptpForms';
@@ -25,7 +25,7 @@ export async function formatTptpRemotely(
       };
     }
 
-    const output = extractSystemB4TptpOutput(await response.text());
+    const output = extractSystemB4TptpHtmlOutput(await response.text());
     if (output === undefined) {
       return { kind: 'failure', message: 'unrecognized response' };
     }

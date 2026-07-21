@@ -3,7 +3,7 @@ import { JSDOM } from 'jsdom';
 /**
  * Extract the text between `<PRE>` and `</PRE>` from the HTML response of System B4 TPTP.
  */
-export function extractSystemB4TptpOutput(html: string): string | undefined {
+export function extractSystemB4TptpHtmlOutput(html: string): string | undefined {
   const dom = new JSDOM(html);
   const preText = dom.window.document.querySelector('pre')?.textContent ?? undefined;
   if (preText === undefined) {
@@ -39,4 +39,44 @@ export function lastNonemptyLine(text: string): string | undefined {
   }
 
   return undefined;
+}
+
+/** Finds an SZS status line before an SZS output block. */
+function getSzsStatusLine(output: string): string | undefined {
+  for (const line of output.split(/\r?\n/)) {
+    if (/^% SZS output start \S+/.test(line)) {
+      return undefined;
+    }
+    if (/^% SZS status \S+/.test(line)) {
+      return line;
+    }
+  }
+
+  return undefined;
+}
+
+/** Extracts the status name from an SZS status line before an SZS output block. */
+export function getSzsStatus(output: string): string | undefined {
+  return getSzsStatusLine(output)?.match(/^% SZS status (\S+)/)?.[1];
+}
+
+/** Extracts the message after the first colon in an SZS status line. */
+export function getSzsStatusMessage(output: string): string | undefined {
+  const statusLine = getSzsStatusLine(output);
+  const colonIndex = statusLine?.indexOf(':') ?? -1;
+  if (!statusLine || colonIndex < 0) {
+    return undefined;
+  }
+
+  return statusLine.slice(colonIndex + 1).trim() || undefined;
+}
+
+/** Extracts the content between the outermost SZS output markers. */
+export function getSzsOutput(output: string): string | undefined {
+  const szsOutput = output.match(
+    /^% SZS output start \S+[^\r\n]*\r?\n([\s\S]*)\r?\n% SZS output end \S+[^\r\n]*$/m
+  )?.[1];
+
+  // A greedy capture can consume the `\r` from the final CRLF delimiter.
+  return szsOutput?.replace(/\r$/, '');
 }

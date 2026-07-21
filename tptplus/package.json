@@ -3,7 +3,7 @@
   "displayName": "TPTP",
   "publisher": "TPTPWorld",
   "description": "Syntax highlighting, error detection, pretty-printing, and proving & processing theorems functions for TPTP language",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "icon": "images/icons/TPTPWorld.png",
   "repository": {
     "type": "git",
@@ -60,6 +60,15 @@
         }
       },
       {
+        "command": "tptp.typeCheck",
+        "title": "TPTP: Type-Check with LEO-III",
+        "enablement": "!tptp.typeCheckRunning",
+        "icon": {
+          "light": "./images/icons/Type.png",
+          "dark": "./images/icons/Type.png"
+        }
+      },
+      {
         "command": "tptp.proveProblem",
         "title": "TPTP: Prove Problem"
       },
@@ -89,7 +98,12 @@
         {
           "command": "tptp.prettyPrint",
           "when": "editorLangId == tptp",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "tptp.typeCheck",
+          "when": "editorLangId == tptp",
+          "group": "navigation@2"
         }
       ],
       "editor/context": [
@@ -162,7 +176,9 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -b",
     "watch": "tsc -b -w",
-    "postinstall": "cd client && npm install && cd ../server && npm install && cd .."
+    "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
+    "pretest:unit": "npm run compile",
+    "test:unit": "node --test client/test/*.test.js"
   },
   "devDependencies": {
     "@types/node": "^16.18.34",

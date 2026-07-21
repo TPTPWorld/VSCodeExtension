@@ -166,7 +166,11 @@ Added error handling for "Format TPTP File": display error message and jump to p
 
 ### 0.1.11
 
-Added title-menu button for "TPTP: Check Syntax and Format TPTP File"; improved error handling for pretty-printer.
+Added title-menu button for "TPTP: Pretty-Print TPTP File"; improved error handling for pretty-printer.
+
+### 0.1.12
+
+Added title-menu button for "TPTP: Type-Check with LEO-III"; improved error handling for pretty-printer; retired legacy formatter.
 
 ---
 
