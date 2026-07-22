@@ -18,6 +18,11 @@ import {
   TextDocument
 } from 'vscode-languageserver-textdocument';
 
+import {
+  parseTptpDocument,
+  TptpAntlrParseResult,
+} from './parser/tptpAntlrParser';
+
 // Create connection and document manager
 const connection = createConnection(ProposedFeatures.all);
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
@@ -439,6 +444,37 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   const diagnostics = validator.validateDocument(textDocument);
   connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
+
+interface ExperimentalParseWithAntlrParams {
+  uri: string;
+}
+
+connection.onRequest(
+  'tptp/experimentalParseWithAntlr',
+  async (params: ExperimentalParseWithAntlrParams): Promise<TptpAntlrParseResult> => {
+    const document = documents.get(params.uri);
+    if (!document) {
+      return {
+        ok: false,
+        diagnostics: [{
+          severity: DiagnosticSeverity.Error,
+          range: {
+            start: { line: 0, character: 0 },
+            end: { line: 0, character: 1 },
+          },
+          message: 'Unable to parse with TPTP ANTLR parser: document is not open in the language server',
+          source: 'tptp-antlr-experimental',
+        }],
+        summary: {
+          elapsedMs: 0,
+          syntaxErrorCount: 1,
+        },
+      };
+    }
+
+    return parseTptpDocument(document.getText());
+  }
+);
 
 // Basic completion support
 connection.onCompletion(

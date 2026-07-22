@@ -69,6 +69,14 @@
         }
       },
       {
+        "command": "tptp.experimentalParseWithAntlr",
+        "title": "TPTP: Experimental Parse with ANTLR",
+        "icon": {
+          "light": "./images/icons/Syntax.png",
+          "dark": "./images/icons/Syntax.png"
+        }
+      },
+      {
         "command": "tptp.proveProblem",
         "title": "TPTP: Prove Problem"
       },
@@ -101,9 +109,14 @@
           "group": "navigation@1"
         },
         {
-          "command": "tptp.typeCheck",
+          "command": "tptp.experimentalParseWithAntlr",
           "when": "editorLangId == tptp",
           "group": "navigation@2"
+        },
+        {
+          "command": "tptp.typeCheck",
+          "when": "editorLangId == tptp",
+          "group": "navigation@3"
         }
       ],
       "editor/context": [
@@ -174,6 +187,7 @@
   "scripts": {
     "build:wasm": "emcmake cmake -S native/tptp-pretty -B native/tptp-pretty/build-wasm && cmake --build native/tptp-pretty/build-wasm",
     "vscode:prepublish": "npm run compile",
+    "precompile": "npm install --prefix server --no-audit --no-fund",
     "compile": "tsc -b",
     "watch": "tsc -b -w",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
