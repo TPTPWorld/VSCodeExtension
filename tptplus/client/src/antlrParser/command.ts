@@ -38,7 +38,7 @@ function createAntlrParserCommandHandler(
   return async (): Promise<void> => {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'tptp') {
-      vscode.window.showErrorMessage('No active TPTP file open');
+      vscode.window.showErrorMessage('No TPTP file is currently open.');
       return;
     }
 

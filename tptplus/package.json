@@ -192,7 +192,7 @@
     "watch": "tsc -b -w",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
     "pretest:unit": "npm run compile",
-    "test:unit": "node --test client/test/*.test.js"
+    "test:unit": "node --test client/test/*.test.js server/test/*.test.js"
   },
   "devDependencies": {
     "@types/node": "^16.18.34",
