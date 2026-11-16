@@ -2,13 +2,13 @@
 
 These files are generated from:
 
-- Repository: https://github.com/jzxia/TPTP_SyntaxBNF
-- Branch: `feat__BNF2ANTLR_based_on_meta_grammar`
+- Repository: https://github.com/TPTPWorld/SyntaxBNF
+- Branch: `master`
 - Grammar: `BNFMetaGrammar/ANTLRGrammar/converted_by_meta/TPTP.g4`
-- Upstream commit: `daf63b83dfc9a5187f93e0bc846a2120f8c8a8b7`
-- [Pinned grammar source](https://github.com/jzxia/TPTP_SyntaxBNF/blob/daf63b83dfc9a5187f93e0bc846a2120f8c8a8b7/BNFMetaGrammar/ANTLRGrammar/converted_by_meta/TPTP.g4)
+- Upstream commit: `22e70448b43609ed0a7b3f777d190407db2db2da`
+- [Pinned grammar source](https://github.com/TPTPWorld/SyntaxBNF/blob/22e70448b43609ed0a7b3f777d190407db2db2da/BNFMetaGrammar/ANTLRGrammar/converted_by_meta/TPTP.g4)
 - Grammar SHA-256: `dbcf5b0cd565e15a6ebb6f4aecbca0d9a120d6fb9c57d2e213ea36665f892bd1`
-- Fetched on: 2026-11-12
+- Fetched on: 2026-11-16
 - Generator: ANTLR 4.13.2, JavaScript target (default listener enabled)
 
 The upstream grammar is used without modifications.
