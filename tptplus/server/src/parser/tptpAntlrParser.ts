@@ -79,7 +79,7 @@ export async function parseTptpDocument(text: string): Promise<TptpAntlrParseRes
 
     const tokens = new runtime.antlr4.CommonTokenStream(lexer);
     const parser = new runtime.TPTPParser(tokens);
-    parser.buildParseTrees = true;
+    parser.buildParseTrees = false;
     parser.removeErrorListeners();
     parser.addErrorListener(errorListener);
     parser.tptp_file();

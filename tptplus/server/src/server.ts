@@ -12,16 +12,15 @@ import {
   TextDocumentPositionParams,
   TextDocumentSyncKind,
   InitializeResult,
+  CancellationToken,
 } from 'vscode-languageserver/node';
 
 import {
   TextDocument
 } from 'vscode-languageserver-textdocument';
 
-import {
-  parseTptpDocument,
-  TptpAntlrParseResult,
-} from './parser/tptpAntlrParser';
+import type { TptpAntlrParseResult } from './parser/tptpAntlrParser';
+import { parseTptpDocumentInWorker } from './parser/tptpAntlrWorkerRunner';
 
 // Create connection and document manager
 const connection = createConnection(ProposedFeatures.all);
@@ -451,7 +450,10 @@ interface ExperimentalParseWithAntlrParams {
 
 connection.onRequest(
   'tptp/experimentalParseWithAntlr',
-  async (params: ExperimentalParseWithAntlrParams): Promise<TptpAntlrParseResult> => {
+  async (
+    params: ExperimentalParseWithAntlrParams,
+    token: CancellationToken
+  ): Promise<TptpAntlrParseResult> => {
     const document = documents.get(params.uri);
     if (!document) {
       return {
@@ -472,7 +474,7 @@ connection.onRequest(
       };
     }
 
-    return parseTptpDocument(document.getText());
+    return parseTptpDocumentInWorker(document.getText(), token);
   }
 );
 

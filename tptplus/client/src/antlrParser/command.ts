@@ -1,11 +1,63 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import type { LanguageClient } from 'vscode-languageclient/node';
 
-import { toVsCodeDiagnostic } from './diagnostics';
+import { revealFirstAntlrError, toVsCodeDiagnostic } from './diagnostics';
 import type { ExperimentalParseWithAntlrResult } from './types';
 
 const ANTLR_PARSE_COMMAND = 'tptp.experimentalParseWithAntlr';
 const ANTLR_PARSE_REQUEST = 'tptp/experimentalParseWithAntlr';
+const ANTLR_PARSE_RUNNING_CONTEXT_KEY = 'tptp.antlrParseRunning';
+
+/** Shows cancellable progress for startup and parsing, without imposing a deadline. */
+async function requestAntlrParse(
+  client: LanguageClient,
+  clientReady: Promise<void>,
+  document: vscode.TextDocument
+): Promise<ExperimentalParseWithAntlrResult | undefined> {
+  return vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: 'Parsing with ANTLR',
+      cancellable: true
+    },
+    async (progress, token) => {
+      progress.report({ message: path.basename(document.fileName) });
+      let cancellation: vscode.Disposable | undefined;
+      const cancelled = new Promise<undefined>(resolve => {
+        cancellation = token.onCancellationRequested(() => resolve(undefined));
+        if (token.isCancellationRequested) {
+          resolve(undefined);
+        }
+      });
+      const request = async (): Promise<ExperimentalParseWithAntlrResult | undefined> => {
+        await clientReady;
+        if (token.isCancellationRequested) {
+          return undefined;
+        }
+        return client.sendRequest<ExperimentalParseWithAntlrResult>(
+          ANTLR_PARSE_REQUEST,
+          { uri: document.uri.toString() },
+          token
+        );
+      };
+
+      try {
+        // Close progress promptly even if cancellation happens during startup.
+        // The same token also forwards cancellation to the server's worker.
+        const result = await Promise.race([request(), cancelled]);
+        return token.isCancellationRequested ? undefined : result;
+      } catch (error: unknown) {
+        if (token.isCancellationRequested) {
+          return undefined;
+        }
+        throw error;
+      } finally {
+        cancellation?.dispose();
+      }
+    }
+  );
+}
 
 function writeTptpAntlrParseLog(
   output: vscode.OutputChannel,
@@ -35,7 +87,14 @@ function createAntlrParserCommandHandler(
   diagnostics: vscode.DiagnosticCollection,
   output: vscode.OutputChannel
 ): () => Promise<void> {
+  let parseRunning = false;
+
   return async (): Promise<void> => {
+    if (parseRunning) {
+      vscode.window.showInformationMessage('ANTLR is already parsing a TPTP file.');
+      return;
+    }
+
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== 'tptp') {
       vscode.window.showErrorMessage('No TPTP file is currently open.');
@@ -49,18 +108,28 @@ function createAntlrParserCommandHandler(
       return;
     }
 
+    parseRunning = true;
     try {
-      await clientReady;
-      const result = await client.sendRequest<ExperimentalParseWithAntlrResult>(
-        ANTLR_PARSE_REQUEST,
-        { uri: editor.document.uri.toString() }
-      );
+      await vscode.commands.executeCommand('setContext', ANTLR_PARSE_RUNNING_CONTEXT_KEY, true);
 
-      diagnostics.set(
-        editor.document.uri,
-        result.diagnostics.map(toVsCodeDiagnostic)
-      );
-      writeTptpAntlrParseLog(output, editor.document, result);
+      const document = editor.document;
+      const parsedDocumentVersion = document.version;
+      diagnostics.delete(document.uri);
+      const result = await requestAntlrParse(client, clientReady, document);
+      if (result === undefined) {
+        vscode.window.showInformationMessage('ANTLR parse cancelled.');
+        return;
+      }
+      if (document.isClosed || document.version !== parsedDocumentVersion) {
+        vscode.window.showWarningMessage(
+          'TPTP file changed or was closed while parsing. Please run the parser again.'
+        );
+        return;
+      }
+
+      const parseDiagnostics = result.diagnostics.map(toVsCodeDiagnostic);
+      diagnostics.set(document.uri, parseDiagnostics);
+      writeTptpAntlrParseLog(output, document, result);
 
       if (result.ok) {
         vscode.window.showInformationMessage(
@@ -70,7 +139,7 @@ function createAntlrParserCommandHandler(
         vscode.window.showWarningMessage(
           `ANTLR parse found ${result.summary.syntaxErrorCount} error(s).`
         );
-        output.show(true);
+        await revealFirstAntlrError(document, parseDiagnostics);
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
@@ -78,6 +147,9 @@ function createAntlrParserCommandHandler(
       output.appendLine(message);
       output.show(true);
       vscode.window.showErrorMessage(`TPTP ANTLR parser request failed: ${message}`);
+    } finally {
+      parseRunning = false;
+      await vscode.commands.executeCommand('setContext', ANTLR_PARSE_RUNNING_CONTEXT_KEY, false);
     }
   };
 }

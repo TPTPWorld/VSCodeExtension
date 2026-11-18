@@ -71,6 +71,7 @@
       {
         "command": "tptp.experimentalParseWithAntlr",
         "title": "TPTP: Experimental Parse with ANTLR",
+        "enablement": "!tptp.antlrParseRunning",
         "icon": {
           "light": "./images/icons/Syntax.png",
           "dark": "./images/icons/Syntax.png"

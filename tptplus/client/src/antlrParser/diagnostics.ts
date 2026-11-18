@@ -32,3 +32,23 @@ export function toVsCodeDiagnostic(diagnostic: LspDiagnostic): vscode.Diagnostic
   result.source = diagnostic.source;
   return result;
 }
+
+/** Opens Problems and highlights the first ANTLR error in the parsed document. */
+export async function revealFirstAntlrError(
+  document: vscode.TextDocument,
+  diagnostics: readonly vscode.Diagnostic[]
+): Promise<void> {
+  const firstError = diagnostics[0];
+  if (!firstError) {
+    return;
+  }
+
+  await vscode.commands.executeCommand('workbench.action.showErrorsWarnings');
+  const range = firstError.range;
+  const editor = await vscode.window.showTextDocument(document, {
+    preview: false,
+    selection: range
+  });
+  editor.selection = new vscode.Selection(range.start, range.end);
+  editor.revealRange(range, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+}
