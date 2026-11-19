@@ -61,14 +61,17 @@ type NativeImport = <T = unknown>(specifier: string) => Promise<T>;
 
 const nativeImport = new Function('specifier', 'return import(specifier)') as NativeImport;
 
-let runtimePromise: Promise<TptpAntlrRuntime> | undefined;
+const runtimePromises = new Map<boolean, Promise<TptpAntlrRuntime>>();
 
-export async function parseTptpDocument(text: string): Promise<TptpAntlrParseResult> {
+export async function parseTptpDocument(
+  text: string,
+  useOptimizedGrammar = true
+): Promise<TptpAntlrParseResult> {
   const startedAt = Date.now();
   const lines = text.split(/\r?\n/);
 
   try {
-    const runtime = await loadTptpAntlrRuntime();
+    const runtime = await loadTptpAntlrRuntime(useOptimizedGrammar);
     const syntaxErrors: AntlrSyntaxError[] = [];
     const errorListener = createErrorListener(syntaxErrors);
 
@@ -106,13 +109,20 @@ export async function parseTptpDocument(text: string): Promise<TptpAntlrParseRes
   }
 }
 
-async function loadTptpAntlrRuntime(): Promise<TptpAntlrRuntime> {
-  runtimePromise ??= loadTptpAntlrRuntimeUncached();
+async function loadTptpAntlrRuntime(useOptimizedGrammar: boolean): Promise<TptpAntlrRuntime> {
+  let runtimePromise = runtimePromises.get(useOptimizedGrammar);
+  if (!runtimePromise) {
+    runtimePromise = loadTptpAntlrRuntimeUncached(useOptimizedGrammar);
+    runtimePromises.set(useOptimizedGrammar, runtimePromise);
+  }
   return runtimePromise;
 }
 
-async function loadTptpAntlrRuntimeUncached(): Promise<TptpAntlrRuntime> {
-  const vendorDir = path.resolve(__dirname, '..', '..', 'parser', 'vendor', 'tptp-antlr');
+async function loadTptpAntlrRuntimeUncached(useOptimizedGrammar: boolean): Promise<TptpAntlrRuntime> {
+  const vendorDir = path.resolve(
+    __dirname, '..', '..', 'parser', 'vendor', 'tptp-antlr',
+    useOptimizedGrammar ? 'optimized' : 'original'
+  );
   const lexerUrl = pathToFileURL(path.join(vendorDir, 'TPTPLexer.js')).href;
   const parserUrl = pathToFileURL(path.join(vendorDir, 'TPTPParser.js')).href;
 
@@ -163,7 +173,7 @@ function toDiagnostic(error: AntlrSyntaxError, lines: string[]): Diagnostic {
       end: { line, character: endCharacter },
     },
     message: `TPTP ANTLR parser: ${error.message}`,
-    source: 'tptp-antlr-experimental',
+    source: 'tptp-antlr',
   };
 }
 
@@ -176,7 +186,7 @@ function createRuntimeDiagnostic(error: unknown): Diagnostic {
       end: { line: 0, character: 1 },
     },
     message: `Unable to run TPTP ANTLR parser: ${message}`,
-    source: 'tptp-antlr-experimental',
+    source: 'tptp-antlr',
   };
 }
 

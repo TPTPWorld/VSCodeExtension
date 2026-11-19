@@ -3,10 +3,13 @@ import * as vscode from 'vscode';
 import type { LanguageClient } from 'vscode-languageclient/node';
 
 import { revealFirstAntlrError, toVsCodeDiagnostic } from './diagnostics';
-import type { ExperimentalParseWithAntlrResult } from './types';
+import type { ParseWithAntlrResult } from './types';
 
-const ANTLR_PARSE_COMMAND = 'tptp.experimentalParseWithAntlr';
-const ANTLR_PARSE_REQUEST = 'tptp/experimentalParseWithAntlr';
+// Set to false to use the original metagrammar-converted grammar; rebuild afterward.
+const USE_OPTIMIZED_ANTLR_GRAMMAR = false;
+
+const ANTLR_PARSE_COMMAND = 'tptp.parseWithAntlr';
+const ANTLR_PARSE_REQUEST = 'tptp/parseWithAntlr';
 const ANTLR_PARSE_RUNNING_CONTEXT_KEY = 'tptp.antlrParseRunning';
 
 /** Shows cancellable progress for startup and parsing, without imposing a deadline. */
@@ -14,7 +17,7 @@ async function requestAntlrParse(
   client: LanguageClient,
   clientReady: Promise<void>,
   document: vscode.TextDocument
-): Promise<ExperimentalParseWithAntlrResult | undefined> {
+): Promise<ParseWithAntlrResult | undefined> {
   return vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
@@ -30,14 +33,17 @@ async function requestAntlrParse(
           resolve(undefined);
         }
       });
-      const request = async (): Promise<ExperimentalParseWithAntlrResult | undefined> => {
+      const request = async (): Promise<ParseWithAntlrResult | undefined> => {
         await clientReady;
         if (token.isCancellationRequested) {
           return undefined;
         }
-        return client.sendRequest<ExperimentalParseWithAntlrResult>(
+        return client.sendRequest<ParseWithAntlrResult>(
           ANTLR_PARSE_REQUEST,
-          { uri: document.uri.toString() },
+          {
+            uri: document.uri.toString(),
+            useOptimizedGrammar: USE_OPTIMIZED_ANTLR_GRAMMAR
+          },
           token
         );
       };
@@ -62,9 +68,10 @@ async function requestAntlrParse(
 function writeTptpAntlrParseLog(
   output: vscode.OutputChannel,
   document: vscode.TextDocument,
-  result: ExperimentalParseWithAntlrResult
+  result: ParseWithAntlrResult
 ): void {
   output.appendLine(`[${new Date().toISOString()}] ${document.uri.fsPath}`);
+  output.appendLine(`Grammar: ${USE_OPTIMIZED_ANTLR_GRAMMAR ? 'optimized' : 'original'}`);
   output.appendLine(`Elapsed: ${result.summary.elapsedMs}ms`);
   output.appendLine(`Syntax errors: ${result.summary.syntaxErrorCount}`);
 
@@ -103,7 +110,7 @@ function createAntlrParserCommandHandler(
 
     if (editor.document.uri.scheme !== 'file') {
       vscode.window.showErrorMessage(
-        'The experimental TPTP ANTLR parser currently supports file-backed TPTP documents only.'
+        'The TPTP ANTLR parser currently supports file-backed TPTP documents only.'
       );
       return;
     }
@@ -154,12 +161,12 @@ function createAntlrParserCommandHandler(
   };
 }
 
-/** Registers the experimental ANTLR parser command and its diagnostic lifecycle. */
+/** Registers the ANTLR parser command and its diagnostic lifecycle. */
 export function registerAntlrParserCommand(
   client: LanguageClient,
   clientReady: Promise<void>
 ): vscode.Disposable {
-  const diagnostics = vscode.languages.createDiagnosticCollection('tptpAntlrExperimental');
+  const diagnostics = vscode.languages.createDiagnosticCollection('tptpAntlr');
   const output = vscode.window.createOutputChannel('TPTP ANTLR Parser');
   const commandHandler = createAntlrParserCommandHandler(
     client,

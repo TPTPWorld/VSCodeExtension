@@ -444,14 +444,15 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
 
-interface ExperimentalParseWithAntlrParams {
+interface ParseWithAntlrParams {
   uri: string;
+  useOptimizedGrammar?: boolean;
 }
 
 connection.onRequest(
-  'tptp/experimentalParseWithAntlr',
+  'tptp/parseWithAntlr',
   async (
-    params: ExperimentalParseWithAntlrParams,
+    params: ParseWithAntlrParams,
     token: CancellationToken
   ): Promise<TptpAntlrParseResult> => {
     const document = documents.get(params.uri);
@@ -465,7 +466,7 @@ connection.onRequest(
             end: { line: 0, character: 1 },
           },
           message: 'Unable to parse with TPTP ANTLR parser: document is not open in the language server',
-          source: 'tptp-antlr-experimental',
+          source: 'tptp-antlr',
         }],
         summary: {
           elapsedMs: 0,
@@ -474,7 +475,7 @@ connection.onRequest(
       };
     }
 
-    return parseTptpDocumentInWorker(document.getText(), token);
+    return parseTptpDocumentInWorker(document.getText(), token, params.useOptimizedGrammar);
   }
 );
 

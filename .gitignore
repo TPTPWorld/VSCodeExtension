@@ -10,6 +10,8 @@ tptplus/server/out/
 .env
 RemoteSot.py
 *.g4
+!tptplus/server/parser/vendor/tptp-antlr/original/TPTP.g4
+!tptplus/server/parser/vendor/tptp-antlr/optimized/TPTP.g4
 SyntaxBNF
 .DS_Store
 

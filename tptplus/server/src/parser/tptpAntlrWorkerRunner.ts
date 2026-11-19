@@ -9,6 +9,11 @@ import {
 
 import type { TptpAntlrParseResult } from './tptpAntlrParser';
 
+export interface TptpAntlrWorkerData {
+  text: string;
+  useOptimizedGrammar: boolean;
+}
+
 function cancelled(): ResponseError<void> {
   return new ResponseError(LSPErrorCodes.RequestCancelled, 'ANTLR parse cancelled.');
 }
@@ -16,15 +21,17 @@ function cancelled(): ResponseError<void> {
 /** Runs CPU-bound parsing off the server thread, with cancellation and no deadline. */
 export function parseTptpDocumentInWorker(
   text: string,
-  token: CancellationToken
+  token: CancellationToken,
+  useOptimizedGrammar = true
 ): Promise<TptpAntlrParseResult> {
   if (token.isCancellationRequested) {
     return Promise.reject(cancelled());
   }
 
   return new Promise((resolve, reject) => {
+    const data: TptpAntlrWorkerData = { text, useOptimizedGrammar };
     const worker = new Worker(path.join(__dirname, 'tptpAntlrWorker.js'), {
-      workerData: text,
+      workerData: data,
     });
     let settled = false;
     let cancellation: Disposable | undefined;

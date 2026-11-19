@@ -15,7 +15,7 @@ export interface LspDiagnostic {
   source?: string;
 }
 
-export interface ExperimentalParseWithAntlrResult {
+export interface ParseWithAntlrResult {
   ok: boolean;
   diagnostics: LspDiagnostic[];
   summary: {

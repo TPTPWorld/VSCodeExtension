@@ -69,8 +69,8 @@
         }
       },
       {
-        "command": "tptp.experimentalParseWithAntlr",
-        "title": "TPTP: Experimental Parse with ANTLR",
+        "command": "tptp.parseWithAntlr",
+        "title": "TPTP: Parse with ANTLR",
         "enablement": "!tptp.antlrParseRunning",
         "icon": {
           "light": "./images/icons/Syntax.png",
@@ -110,7 +110,7 @@
           "group": "navigation@1"
         },
         {
-          "command": "tptp.experimentalParseWithAntlr",
+          "command": "tptp.parseWithAntlr",
           "when": "editorLangId == tptp",
           "group": "navigation@2"
         },

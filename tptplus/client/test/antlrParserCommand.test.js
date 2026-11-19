@@ -44,7 +44,7 @@ const syntaxError = {
   summary: { elapsedMs: 30, syntaxErrorCount: 1 }
 };
 
-function setup(sendRequest, clientReady = Promise.resolve()) {
+function setup(sendRequest, clientReady = Promise.resolve(), useOptimizedGrammar) {
   const requestStarted = deferred();
   const progressStarted = deferred();
   const state = {
@@ -127,9 +127,18 @@ function setup(sendRequest, clientReady = Promise.resolve()) {
 
   // Load the compiled command with an isolated VS Code mock; other tests keep
   // their normal require cache and modules.
+  const commandFilename = require.resolve('../out/antlrParser/command');
   function loadModule(filename) {
     const module = { exports: {} };
-    vm.runInNewContext(fs.readFileSync(filename, 'utf8'), {
+    let source = fs.readFileSync(filename, 'utf8');
+    if (filename === commandFilename && useOptimizedGrammar !== undefined) {
+      assert.match(source, /const USE_OPTIMIZED_ANTLR_GRAMMAR = (true|false);/);
+      source = source.replace(
+        /const USE_OPTIMIZED_ANTLR_GRAMMAR = (true|false);/,
+        `const USE_OPTIMIZED_ANTLR_GRAMMAR = ${useOptimizedGrammar};`
+      );
+    }
+    vm.runInNewContext(source, {
       exports: module.exports,
       module,
       require(id) {
@@ -142,7 +151,7 @@ function setup(sendRequest, clientReady = Promise.resolve()) {
     }, { filename });
     return module.exports;
   }
-  const command = loadModule(require.resolve('../out/antlrParser/command'));
+  const command = loadModule(commandFilename);
   state.registration = command.registerAntlrParserCommand({
     sendRequest(...args) {
       state.requests.push(args);
@@ -160,8 +169,9 @@ test('shows cancellable progress followed by a completion notification', async (
   const pending = state.command();
   const [method, params, token] = await requestStarted;
 
-  assert.equal(method, 'tptp/experimentalParseWithAntlr');
+  assert.equal(method, 'tptp/parseWithAntlr');
   assert.equal(params.uri, 'file:///tmp/command-test.p');
+  assert.equal(typeof params.useOptimizedGrammar, 'boolean');
   assert.equal(token, state.progressSources[0].token);
   assert.equal(state.progressOptions[0].cancellable, true);
   assert.equal(state.progressOptions[0].location, 15);
@@ -178,6 +188,18 @@ test('shows cancellable progress followed by a completion notification', async (
   assert.equal(state.outputShows, 0);
   assert.equal(state.shownDocuments.length, 0);
   assert.deepEqual(state.contexts.map(args => args[2]), [true, false]);
+});
+
+test('selects either grammar by changing the command constant', async t => {
+  for (const useOptimizedGrammar of [true, false]) {
+    await t.test(useOptimizedGrammar ? 'optimized' : 'original', async () => {
+      const { state } = setup(async () => success, Promise.resolve(), useOptimizedGrammar);
+      await state.command();
+
+      assert.equal(state.requests[0][1].useOptimizedGrammar, useOptimizedGrammar);
+      assert.ok(state.log.includes(`Grammar: ${useOptimizedGrammar ? 'optimized' : 'original'}`));
+    });
+  }
 });
 
 test('opens Problems and highlights the first ANTLR error in the requested file', async () => {
