@@ -1,8 +1,8 @@
 # TPTP Editor
 
-TPTP Editor is a VSCode extension that provides a streamlined development environment for working with the TPTP language, a standard format used extensively in automated theorem proving and formal logic research.
+TPTP Editor is a VS Code extension that provides a streamlined development environment for working with the [TPTP language](https://language.tptp.org/), a standard format used extensively in automated theorem proving and formal logic research.
 
-Built by Daniel Li in collaboration with Dr. Geoff Sutcliffe, the creator of the TPTP library, the extension features full syntax highlighting for both CNF, FOF, THF, etc. formats, enabling clear visual structuring of axioms, hypotheses, and conjectures. It recognizes '.p' & '.s' problem files, supports pretty-printing and safe character escaping, and integrates directly with the SystemOnTPTP + SystemOnTSTP service, allowing users to author, submit, and view solver results without leaving the editor.
+The extension was originally built by Daniel Li and later improved by Jiazhen Xia, both in collaboration with Dr. Geoff Sutcliffe, the creator of the TPTP library. The extension features full syntax highlighting for both CNF, FOF, THF, etc. formats, enabling clear visual structuring of axioms, hypotheses, and conjectures. It recognizes '.p' & '.s' problem files, supports pretty-printing and safe character escaping, and integrates directly with the SystemOnTPTP + SystemOnTSTP service, allowing users to author, submit, and view solver results without leaving the editor.
 
 Designed for researchers, students, and logic developers. TPTP Editor enhances productivity and readability in formal logic workflows within the comfort of VS Code.
 
