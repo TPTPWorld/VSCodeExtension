@@ -7,7 +7,7 @@ Both grammar variants and their generated JavaScript parsers are kept here:
 
 Set `USE_OPTIMIZED_ANTLR_GRAMMAR` at the beginning of
 [`client/src/antlrParser/command.ts`](../../../../client/src/antlrParser/command.ts)
-to `true` for the optimized grammar (default) or `false` for the original grammar.
+to `true` for the optimized grammar or `false` for the original grammar.
 Run `npm run compile` from `tptplus`, then reload the extension. The command passes
 the choice to the server and parser worker; its output log names the selected
 grammar. The server caches each variant separately.
