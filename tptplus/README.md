@@ -8,7 +8,7 @@ Designed for researchers, students, and logic developers. TPTP Editor enhances p
 
 ## Features
 
-### - TPTP Language Features
+### TPTP Language Features
 
 <img src="./tptplus/images/sample1.png" alt="sample image1" width="500"><br>
 
