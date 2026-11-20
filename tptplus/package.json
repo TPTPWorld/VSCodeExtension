@@ -33,7 +33,7 @@
         ],
         "configuration": "./language-configuration.json",
         "icon": {
-          "light": "./images/icons/TPTPWorld.svg",
+          "light": "./images/icons/TPTPWorld-light.svg",
           "dark": "./images/icons/TPTPWorld.svg"
         }
       }
@@ -55,7 +55,7 @@
         "title": "TPTP: Pretty-Print TPTP File",
         "enablement": "!tptp.prettyPrintRunning",
         "icon": {
-          "light": "./images/icons/PrettyPrint.png",
+          "light": "./images/icons/PrettyPrint-light.png",
           "dark": "./images/icons/PrettyPrint.png"
         }
       },
@@ -64,7 +64,7 @@
         "title": "TPTP: Type-Check with LEO-III",
         "enablement": "!tptp.typeCheckRunning",
         "icon": {
-          "light": "./images/icons/Type.png",
+          "light": "./images/icons/Type-light.png",
           "dark": "./images/icons/Type.png"
         }
       },
@@ -73,7 +73,7 @@
         "title": "TPTP: Parse with ANTLR",
         "enablement": "!tptp.antlrParseRunning",
         "icon": {
-          "light": "./images/icons/Syntax.png",
+          "light": "./images/icons/Syntax-light.png",
           "dark": "./images/icons/Syntax.png"
         }
       },
