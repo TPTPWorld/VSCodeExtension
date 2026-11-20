@@ -10,7 +10,7 @@ Designed for researchers, students, and logic developers. TPTP Editor enhances p
 
 ### TPTP Extension Functionality
 
-- Title-menu buttons <img src="./tptplus/images/titlemenu_buttons.png" alt="TPTP editor title-menu buttons" width="100" style="vertical-align: middle;">
+- Title-menu buttons <img src="./tptplus/images/titlemenu_buttons.png" alt="TPTP editor title-menu buttons" width="100" align="absmiddle">
   - **P — Pretty-print:** Formats the current TPTP file in the editor for readability, using the local pretty-printer ([JJParser](https://github.com/TPTPWorld/JJParser/)) with a remote fallback ([System B4 TPTP](https://tptp.org/cgi-bin/SystemB4TPTP)).
   - **S — Syntax check:** Parses the current TPTP file with ANTLR using a grammar derived from the BNF in [TPTPWorld/SyntaxBNF](https://github.com/TPTPWorld/SyntaxBNF/) and reports syntax errors.
   - **T — Type check:** Checks the current TPTP file with [LEO-III-STC](https://github.com/leoprover/Leo-III) via [System B4 TPTP](https://tptp.org/cgi-bin/SystemB4TPTP) and reports type errors.
