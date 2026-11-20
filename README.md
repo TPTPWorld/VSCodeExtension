@@ -8,6 +8,19 @@ Designed for researchers, students, and logic developers. TPTP Editor enhances p
 
 ## Features
 
+### TPTP Extension Functionality
+
+- Title-menu buttons <img src="./tptplus/images/titlemenu_buttons.png" alt="TPTP editor title-menu buttons" width="100" style="vertical-align: middle;">
+  - **P — Pretty-print:** Formats the current TPTP file in the editor for readability, using the local pretty-printer ([JJParser](https://github.com/TPTPWorld/JJParser/)) with a remote fallback ([System B4 TPTP](https://tptp.org/cgi-bin/SystemB4TPTP)).
+  - **S — Syntax check:** Parses the current TPTP file with ANTLR using a grammar derived from the BNF in [TPTPWorld/SyntaxBNF](https://github.com/TPTPWorld/SyntaxBNF/) and reports syntax errors.
+  - **T — Type check:** Checks the current TPTP file with [LEO-III-STC](https://github.com/leoprover/Leo-III) via [System B4 TPTP](https://tptp.org/cgi-bin/SystemB4TPTP) and reports type errors.
+- Custom file icons for '.p' & '.s' files inside VS Code
+- Automatically parses and extracts content for submission to theorem provers
+- Import problems and solutions directly from the TPTP library
+- Provides download support for solution outputs directly from the Webview
+- Enables side-by-side comparison of problems and their solutions in VS Code
+- Supports multiple TPTP problem domains and systems
+
 ### TPTP Language Features 
 
 <img src="./tptplus/images/sample1.png" alt="sample image1" width="500"><br>
@@ -23,16 +36,6 @@ Designed for researchers, students, and logic developers. TPTP Editor enhances p
   - Various special characters (`~`, `|`, `&`, etc.)
 - Clean and consistent token coloring across themes
 - Real-time error diagnostics and checking
-
-### TPTP Extension Functionality
-
-- Pretty-prints TPTP problem content inside the webview for readability
-- Custom file icons for '.p' & '.s' files inside VS Code
-- Automatically parses and extracts content for submission to theorem provers
-- Import problems and solutions directly from the TPTP library
-- Provides download support for solution outputs directly from the Webview
-- Enables side-by-side comparison of problems and their solutions in VS Code
-- Supports multiple TPTP problem domains and systems
 
 ### Theorem Proving & Solution Processing
 
