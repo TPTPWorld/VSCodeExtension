@@ -22,3 +22,4 @@
 - v0.1.11 Added title-menu button for command "TPTP: Pretty-Print TPTP File"; improved error handling for pretty-printer.
 - v0.1.12 Added command "TPTP: Type-Check with LEO-III" and a title-menu button for it; improved error handling for pretty-printer; retired legacy formatter.
 - v0.1.13 Added command "TPTP: Parse with ANTLR" and a title-menu button for it. It currently uses an unoptimized version of ANTLR grammar and can be slow.
+- v0.1.14 Added descriptions of title-menu buttons (P, S, and T) in README.
